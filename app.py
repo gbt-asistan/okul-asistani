@@ -147,6 +147,29 @@ st.markdown("""
         color: white !important;
     }
 
+    /* 4. SATIN AL BUTONU TASARIMI */
+    .buy-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0.6rem;
+        background: linear-gradient(90deg, #ec4899, #8b5cf6); /* Pembe-Mor */
+        color: white !important;
+        text-align: center;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        border: 1px solid #db2777;
+        box-shadow: 0 2px 5px rgba(236, 72, 153, 0.4);
+        transition: all 0.3s ease;
+    }
+    .buy-btn:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+        color: white !important;
+    }
+
     /* TASARIM DETAYLARI */
     .main-title {
         font-size: 1.8rem; font-weight: 800; text-align: center; color: white; margin-bottom: 5px;
@@ -181,7 +204,7 @@ with header_container:
         if st.button("Çıkış", key="logout"):
             st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
-    # Menüler (YENİ MOD EKLENDİ)
+    # Menüler
     c1, c2, c3 = st.columns(3)
     with c1: seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
     with c2: mod = st.selectbox("Mod", [
@@ -190,24 +213,35 @@ with header_container:
         "📝 Kompozisyon Yaz", 
         "💬 Sohbet", 
         "🏠 Ödev Yardımı",
-        "🌍 Tüm Diller Öğretmeni (Pro)",  # <--- YENİ MOD BURADA
+        "🌍 Tüm Diller Öğretmeni (Pro)",
         "📂 Dosya Analizi (Pro)"
     ], label_visibility="collapsed")
     with c3:
         if is_premium: persona = st.selectbox("Tarz", ["Normal", "Komik", "Disiplinli"], label_visibility="collapsed")
         else: st.selectbox("Tarz", ["Normal"], disabled=True, label_visibility="collapsed"); persona="Normal"
 
-    # Ekstra Özellikler (Sadece Premium)
+    # Ekstra Özellikler (Premium)
     if is_premium and "Dosya" in mod:
         st.file_uploader("Dosya", type=['pdf','docx','png'], label_visibility="collapsed")
     
+    # Premium Satın Alma ve Kod Girme (Yan Yana Butonlar)
     if not is_premium:
         with st.expander("💎 Premium Kod Gir"):
             kod = st.text_input("Kod:", placeholder="SOA-XXXX", label_visibility="collapsed")
-            if st.button("Aktifleştir"):
-                ok, msg = activate_premium(conn, username, kod.strip())
-                if ok: st.balloons(); st.success(msg); st.rerun()
-                else: st.error(msg)
+            
+            # BURADA EKRANI İKİYE BÖLÜYORUZ: AKTİFLEŞTİR VE SATIN AL
+            col_act, col_buy = st.columns([1, 1.5])
+            
+            with col_act:
+                if st.button("Aktifleştir", use_container_width=True):
+                    ok, msg = activate_premium(conn, username, kod.strip())
+                    if ok: st.balloons(); st.success(msg); st.rerun()
+                    else: st.error(msg)
+            
+            with col_buy:
+                # Buraya kendi Shopier veya ödeme linkini yapıştırabilirsin
+                link = "https://www.shopier.com/" 
+                st.markdown(f'<a href="{link}" target="_blank" class="buy-btn">💳 3 Üyelik 49 TL - AL</a>', unsafe_allow_html=True)
     
     st.write("") 
 
@@ -224,14 +258,12 @@ if prompt := st.chat_input("Buraya yaz..."):
         if ok: st.balloons(); st.success(msg); st.rerun()
         else: st.error(msg)
     
-    # Kısıtlamalar
     elif "Pro" in mod and not is_premium:
-        st.error("🔒 Bu mod sadece Premium üyeler içindir. Lütfen geçiş yapın.")
+        st.error("🔒 Bu mod sadece Premium üyeler içindir.")
     elif kredi <= 0 and not is_premium:
         st.error("Günlük hakkın bitti.")
         
     else:
-        # Mesajı kaydet ve işle
         save_message(conn, username, "user", prompt)
         st.session_state.messages.append({"role":"user", "content":prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -239,13 +271,9 @@ if prompt := st.chat_input("Buraya yaz..."):
         with st.chat_message("assistant"):
             box = st.empty(); box.markdown("...")
             try:
-                # Mod'a göre sistem mesajı
                 system_prompt = f"Sen 'Okul Asistanı' adında yapay zekasın. Seviye: {seviye}, Mod: {mod}, Stil: {persona}. Soru: {prompt}"
+                if "Dil" in mod: system_prompt += "\nRolün: Profesyonel dil öğretmeni."
                 
-                # Eğer Dil Öğretmeni Modu ise ek talimat
-                if "Dil" in mod:
-                    system_prompt += "\nRolün: Profesyonel bir dil öğretmenisin. Kullanıcının istediği dilde çeviri yap, gramer anlat veya pratik yap."
-
                 con = [system_prompt]
                 res = model.generate_content(con).text
                 box.markdown(res)
