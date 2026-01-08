@@ -21,47 +21,48 @@ st.set_page_config(
     page_title="Okul Asistanı",
     page_icon="🎓",
     layout="wide",
-    initial_sidebar_state="collapsed" # Telefondan girince menü kapalı başlar, temiz durur
+    initial_sidebar_state="collapsed" # Menü kapalı başlar, sol üstteki oka basınca açılır
 )
 
 # ============================================================
-# 🛡️ GİZLİLİK VE GÖRÜNÜM AYARLARI (SENİN İSTEDİĞİN KISIM)
+# 🛡️ DÜZELTİLMİŞ GÖRÜNÜM AYARLARI (PANEL BUTONU GÖRÜNÜR)
 # ============================================================
 st.markdown("""
 <style>
-    /* 1. Sağ üstteki 'Deploy' butonunu YOK ET */
+    /* 1. En Alttaki 'Made with Streamlit' ve Logoları TAMAMEN YOK ET */
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* 2. Sağ Üstteki 'Deploy', 'GitHub' ve Seçenekler Menüsünü GİZLE */
+    [data-testid="stToolbar"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
     .stDeployButton {
         display: none !important;
-        visibility: hidden !important;
     }
     
-    /* 2. Sağ üstteki 'Seçenekler', 'GitHub' logosu ve Menü'yü YOK ET */
-    /* Bu, GitHub'a giden linki de tamamen kaldırır */
-    [data-testid="stToolbar"] {
-        visibility: hidden !important;
-        display: none !important;
-        pointer-events: none !important; /* Tıklamayı engeller */
-    }
-    
-    /* 3. En tepedeki renkli dekorasyon çizgisini gizle */
+    /* 3. Üstteki Renkli Çizgiyi Kaldır */
     [data-testid="stDecoration"] {
         display: none !important;
     }
 
-    /* 4. En alttaki 'Made with Streamlit' yazısını ve footer'ı YOK ET */
-    footer {
-        visibility: hidden !important;
-        display: none !important;
-        pointer-events: none !important;
-    }
-    
-    /* 5. MOBİL MENÜ BUTONU (SOL ÜST) GÖRÜNSÜN */
-    /* Header'ı şeffaf yapıyoruz ama içindeki sol menü butonuna dokunmuyoruz */
-    header {
+    /* 4. KRİTİK AYAR: Üst Başlığı (Header) GİZLEME, ŞEFFAF YAP */
+    /* Bunu gizlersek sol üstteki menü butonu da gider. O yüzden sadece şeffaf yapıyoruz. */
+    [data-testid="stHeader"] {
         background: transparent !important;
     }
 
-    /* Diğer Tasarım Ayarları (Senin Kodundan) */
+    /* 5. Sol Üstteki Menü Açma/Kapama Butonunu (Hamburger/Ok) ZORLA GÖSTER */
+    [data-testid="collapsedControl"] {
+        display: block !important;
+        visibility: visible !important;
+        color: inherit !important;
+    }
+
+    /* Diğer Görünüm Ayarları */
     .stChatInput textarea { height: 100px; }
     .premium-box {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -90,24 +91,18 @@ else:
     st.warning("⚠️ API Anahtarı bulunamadı. Lütfen ayarlardan Secrets kısmına ekleyin.")
     st.stop()
 
-# --- YAPAY ZEKA BAĞLANTISI (OTOMATİK MODEL SEÇİCİ) ---
+# --- YAPAY ZEKA BAĞLANTISI ---
 try:
     genai.configure(api_key=API_KEY)
-    
-    # Mevcut modelleri listele ve çalışan bir tane seç
-    calisan_model = "gemini-1.5-flash" # Varsayılan en hızlısı
-    
+    calisan_model = "gemini-1.5-flash"
     try:
         for m in genai.list_models():
             if 'generateContent' in m.supported_generation_methods:
                 if 'gemini' in m.name:
                     calisan_model = m.name
                     break
-    except:
-        pass 
-        
+    except: pass
     model = genai.GenerativeModel(calisan_model)
-    
 except Exception as e:
     st.error(f"Bağlantı Hatası: {e}")
     st.stop()
@@ -183,27 +178,20 @@ def activate_premium(conn, username, code):
     conn.commit()
     return True, "✅ Premium aktif edildi! 🎉"
 
-# --- SES İÇİN METİN TEMİZLEME ---
 def temizle_ve_konus(metin):
-    temiz_metin = metin.replace("**", "").replace("*", "")
-    temiz_metin = temiz_metin.replace("##", "").replace("#", "")
-    temiz_metin = re.sub(r'^- ', '', temiz_metin, flags=re.MULTILINE)
-    temiz_metin = temiz_metin.strip()
+    temiz_metin = metin.replace("**", "").replace("*", "").replace("##", "").replace("#", "")
+    temiz_metin = re.sub(r'^- ', '', temiz_metin, flags=re.MULTILINE).strip()
     return temiz_metin
 
-# --- UYGULAMA BAŞLANGICI ---
+# --- UYGULAMA ---
 conn = init_db()
 
-# Session State
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "username" not in st.session_state:
-    st.session_state.username = None
+if "messages" not in st.session_state: st.session_state.messages = []
+if "username" not in st.session_state: st.session_state.username = None
 
 # GİRİŞ EKRANI
 if not st.session_state.username:
     st.markdown("<h1 style='text-align: center;'>🎓 Okul Asistanı Giriş</h1>", unsafe_allow_html=True)
-    st.info("👋 Merhaba! Seni tanımam için bir isim girer misin?")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         username_input = st.text_input("Kullanıcı Adı", placeholder="Örn: ogrenci1")
@@ -213,11 +201,10 @@ if not st.session_state.username:
                 if not user: create_user(conn, username_input)
                 st.session_state.username = username_input
                 st.rerun()
-            else:
-                st.warning("Lütfen bir isim yazın.")
+            else: st.warning("Lütfen bir isim yazın.")
     st.stop()
 
-# --- ANA EKRAN ---
+# ANA EKRAN
 username = st.session_state.username
 kredi, is_premium, premium_expiry = update_credits(conn, username)
 history = get_history(conn, username)
@@ -272,7 +259,7 @@ st.title("🎓 Okul Asistanı")
 if "Kompozisyon" in mod:
     st.info("📝 Kompozisyon Modu: Konuyu yaz, gerisini bana bırak.")
 
-# Dosya Yükleme (Sadece Premium)
+# Dosya Yükleme (Premium)
 uploaded_text = ""
 uploaded_image = None
 if "Dosya Analizi" in mod:
@@ -300,7 +287,7 @@ if "Dosya Analizi" in mod:
     else:
         st.warning("🔒 Dosya yüklemek için Premium olmalısın.")
 
-# GEÇMİŞ MESAJLARI GÖSTER
+# GEÇMİŞ MESAJLAR
 for role, content in history:
     with st.chat_message(role):
         st.markdown(content)
@@ -309,12 +296,11 @@ if len(history) == 0:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# KULLANICI MESAJ ALANI
+# MESAJ ALANI
 prompt_text = "Sorunu buraya yaz..."
 if "Kompozisyon" in mod: prompt_text = "Kompozisyon konusunu yaz..."
 
 if prompt := st.chat_input(prompt_text):
-    
     if kredi <= 0 and not is_premium:
         st.error("Günlük hakkın doldu. Yarın gel veya Premium al.")
     else:
