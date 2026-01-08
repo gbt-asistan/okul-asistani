@@ -1,0 +1,6 @@
+streamlit
+google-generativeai
+gTTS
+pypdf
+python-docx
+Pillow
