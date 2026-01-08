@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🛠️ GELİŞMİŞ CSS: SABİT ÜST BAR & KAYAN SOHBET
+# 🎨 LUXURY CSS TASARIMI (PREMIUM HİSSİYATI)
 # ============================================================
 st.markdown("""
 <style>
@@ -34,66 +34,101 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 2. SAYFA DÜZENİ (ÇOK ÖNEMLİ) */
-    /* Üstten 220px boşluk bırak ki sabit panel yazıları kapatmasın */
-    /* Alttan 100px boşluk bırak ki sohbet kutusu en son mesajı kapatmasın */
+    /* 2. SAYFA DÜZENİ */
     .block-container {
-        padding-top: 220px !important;
+        padding-top: 2rem !important; /* Başlık için mesafe */
         padding-bottom: 120px !important;
         max-width: 1000px !important;
     }
 
-    /* 3. SABİT ÜST PANEL (HEADER) */
-    /* Bu sınıfı Python tarafında bir container'a vereceğiz */
-    .fixed-panel {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        background-color: #0f172a !important; /* Koyu Arka Plan */
-        z-index: 99999 !important; /* En üstte dur */
-        border-bottom: 1px solid #334155;
-        padding: 1rem 1rem 0.5rem 1rem !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-    
-    /* Panel içindeki widget'ların düzeni */
-    .stSelectbox, .stButton {
-        margin-bottom: 0px !important;
+    /* 3. BAŞLIK TASARIMI */
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: -webkit-linear-gradient(45deg, #eee, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        margin-bottom: 10px;
     }
 
-    /* 4. SOHBET KUTUSU (ALTA SABİTLEME) */
+    /* 4. SOHBET KUTUSU (HATASIZ) */
     [data-testid="stChatInput"] {
         bottom: 30px !important;
         background: transparent !important;
-        z-index: 9999 !important;
+        display: flex !important;
+        justify-content: center !important;
     }
-    
-    /* Sohbet kutusu stil */
     [data-testid="stChatInput"] > div {
-        background-color: #1e293b !important;
+        background-color: #0f172a !important;
         border: 1px solid #334155 !important;
-        border-radius: 20px !important;
+        border-radius: 25px !important;
         color: white !important;
+        width: 100% !important;
+        max-width: 900px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
     }
-    
-    /* 5. PREMIUM BUTON TASARIMI */
-    .buy-button {
-        display: inline-block;
-        background: linear-gradient(90deg, #ec4899, #8b5cf6);
-        color: white;
-        padding: 8px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: bold;
-        text-align: center;
-        width: 100%;
-        margin-bottom: 10px;
-    }
-    .buy-button:hover {
-        color: #f0fdf4;
+    .stChatInput textarea {
+        background-color: transparent !important;
+        border: none !important;
+        color: white !important;
+        min-height: 50px !important;
     }
 
+    /* 5. KONTROL PANELİ (STANDART) */
+    .control-panel {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        padding: 20px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* 6. PREMIUM PANEL (ALTIN/MOR PARLAMA EFEKTİ) */
+    .premium-panel {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        border: 2px solid transparent;
+        border-image: linear-gradient(45deg, #ffd700, #a855f7) 1;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        padding: 20px;
+        border-radius: 20px; /* Border-image ile radius sorunu olursa diye fallback */
+        margin-bottom: 20px;
+        position: relative;
+    }
+    /* Border-radius hilesi */
+    .premium-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 20px; 
+        padding: 2px; 
+        background: linear-gradient(45deg, #fbbf24, #a855f7); 
+        -webkit-mask: 
+           linear-gradient(#fff 0 0) content-box, 
+           linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+    }
+
+    /* ROZETLER */
+    .user-badge {
+        background-color: #334155;
+        color: #e2e8f0;
+        padding: 5px 12px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    .pro-badge {
+        background: linear-gradient(90deg, #fbbf24, #d946ef);
+        color: #fff;
+        padding: 5px 12px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 10px rgba(217, 70, 239, 0.4);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -112,7 +147,6 @@ try:
     try:
         modeller = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         if any('flash' in m for m in modeller): secilen_model = next(m for m in modeller if 'flash' in m)
-        elif any('pro' in m for m in modeller): secilen_model = next(m for m in modeller if 'pro' in m)
     except: pass
     model = genai.GenerativeModel(secilen_model)
 except Exception as e:
@@ -152,11 +186,11 @@ def update_credits(conn, username):
 def activate_premium(conn, username, code):
     res = conn.cursor().execute("SELECT * FROM premium_codes WHERE code=?", (code,)).fetchone()
     if not res: return False, "❌ Geçersiz kod!"
-    if res[1]: return False, "⚠️ Kullanılmış kod."
+    if res[1]: return False, "⚠️ Kod kullanılmış."
     exp = (datetime.date.today() + datetime.timedelta(days=90)).isoformat()
     conn.cursor().execute("UPDATE users SET is_premium=1, premium_expiry=? WHERE username=?", (exp, username))
     conn.cursor().execute("UPDATE premium_codes SET is_used=1, used_by=? WHERE code=?", (username, code))
-    conn.commit(); return True, "✅ Premium Aktif!"
+    conn.commit(); return True, "✅ Premium Aktif! Hoş geldin VIP."
 
 # --- UYGULAMA ---
 if "messages" not in st.session_state: st.session_state.messages = []
@@ -179,66 +213,85 @@ username = st.session_state.username
 kredi, is_premium, premium_expiry = update_credits(conn, username)
 history = get_history(conn, username)
 
-# ============================================================
-# 📌 SABİT ÜST PANEL (HİLELİ YÖNTEMLE)
-# ============================================================
-# Streamlit'te bir container'ı sabitlemek için bu CSS enjekte edilir.
-# Bu container sayfanın en üstünde asılı kalır.
+# 1. BAŞLIK (EN TEPEYE GELDİ)
+st.markdown('<div class="main-title">🎓 Okul Asistanı</div>', unsafe_allow_html=True)
 
-# 1. Sabit Panel Başlangıcı
-header_container = st.container()
-with header_container:
-    # Bu HTML, içine girdiği container'ı 'fixed-panel' sınıfına dönüştürür
-    st.markdown('<div class="fixed-panel">', unsafe_allow_html=True)
-    
-    # 2. Üst Bilgi Satırı
-    col_info, col_btn = st.columns([3, 1])
-    with col_info:
-        if is_premium: st.markdown(f"**{username}** | 💎 PREMIUM")
-        else: st.markdown(f"**{username}** | Hak: {kredi}")
-    with col_btn:
-        if st.button("Çıkış"):
-            st.session_state.username = None; st.session_state.messages = []; st.rerun()
-            
-    # 3. Ayarlar Satırı (Seçimler)
-    c1, c2 = st.columns(2)
-    with c1:
-        seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
-    with c2:
-        mod = st.selectbox("Mod", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"], label_visibility="collapsed")
+# 2. KONTROL PANELİ (PREMIUM İÇİN ÖZEL TASARIM)
+# Premium ise "premium-panel", değilse "control-panel" sınıfını kullan
+panel_class = "premium-panel" if is_premium else "control-panel"
 
-    # 4. Premium Menüsü (Açılır Kapanır)
-    if not is_premium:
-        with st.expander("💎 Premium İşlemleri (Satın Al / Kod Gir)"):
-            st.markdown('<a href="https://www.shopier.com/" target="_blank" class="buy-button">PREMIUM AL (49 TL)</a>', unsafe_allow_html=True)
-            col_code, col_act = st.columns([2,1])
-            with col_code:
-                kod_girisi = st.text_input("Kod:", placeholder="SOA-XXXX", label_visibility="collapsed")
-            with col_act:
-                if st.button("Onayla"):
-                    ok, msg = activate_premium(conn, username, kod_girisi.strip())
-                    if ok: st.balloons(); st.success(msg); st.rerun()
-                    else: st.error(msg)
+st.markdown(f'<div class="{panel_class}">', unsafe_allow_html=True)
+
+# Üst Satır: Kullanıcı Bilgisi ve Rozetler
+top1, top2 = st.columns([3, 1])
+with top1:
+    if is_premium:
+        st.markdown(f"<span class='pro-badge'>💎 PREMIUM ÜYE</span> &nbsp; **{username}**", unsafe_allow_html=True)
     else:
-        # Premium üyeler için ekstra ayar
-        persona = st.selectbox("Öğretmen Tarzı", ["Normal", "Komik", "Disiplinli", "Samimi"])
+        st.markdown(f"<span class='user-badge'>ÖĞRENCİ</span> &nbsp; **{username}** | Hak: {kredi}/5", unsafe_allow_html=True)
+with top2:
+    if st.button("Çıkış", key="logout"):
+        st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
-    # Dosya Yükleme (Sadece Premium ve Dosya Modunda)
-    if is_premium and "Dosya" in mod:
-        st.file_uploader("Dosya", type=['pdf','docx','png'], label_visibility="collapsed")
-    
-    st.markdown('</div>', unsafe_allow_html=True) # Div kapat
+st.divider()
+
+# Alt Satır: Ayarlar
+c1, c2, c3 = st.columns(3)
+with c1:
+    seviye = st.selectbox("Sınıf Seviyesi", ["🐣 İlkokul", "📘 Ortaokul", "🏫 Lise", "🎓 Üniversite"])
+with c2:
+    mod = st.selectbox("Çalışma Modu", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"])
+with c3:
+    if is_premium:
+        persona = st.selectbox("Öğretmen Tarzı", ["😐 Normal", "😂 Komik", "🫡 Disiplinli", "🥰 Samimi"])
+    else:
+        st.selectbox("Öğretmen Tarzı", ["🔒 Normal (Premium)"], disabled=True); persona = "Normal"
+
+# Dosya Yükleme (Sadece Premium)
+if "Dosya" in mod and is_premium:
+    st.markdown("---")
+    uploaded_file = st.file_uploader("Dosya Yükle", type=['pdf','docx','png','jpg'], label_visibility="collapsed")
+else: uploaded_file = None
+
+# Premium Satın Alma (Sadece Standart Üyeler İçin)
+if not is_premium:
+    with st.expander("💎 Premium Kod Gir"):
+        st.info("Sınırsız soru ve dosya yükleme hakkı kazan!")
+        col_input, col_btn = st.columns([3,1])
+        with col_input:
+            kod = st.text_input("Kod:", placeholder="SOA-XXXX", label_visibility="collapsed")
+        with col_btn:
+            if st.button("Aktifleştir"):
+                ok, msg = activate_premium(conn, username, kod.strip())
+                if ok: st.balloons(); st.success(msg); st.rerun()
+                else: st.error(msg)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
 # 💬 SOHBET ALANI
 # ============================================================
-# Mesaj geçmişini göster
+uploaded_text, uploaded_image = "", None
+if "Dosya" in mod and is_premium and uploaded_file:
+    try:
+        if uploaded_file.name.endswith(".pdf"): r=pypdf.PdfReader(uploaded_file); uploaded_text="".join([p.extract_text() for p in r.pages])
+        elif uploaded_file.name.endswith(('.png','.jpg')): uploaded_image=Image.open(uploaded_file)
+        elif uploaded_file.name.endswith(".docx"): d=Document(uploaded_file); uploaded_text="\n".join([p.text for p in d.paragraphs])
+    except: pass
+
+# Mesaj Geçmişi
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
-# YENİ MESAJ GİRİŞİ
+# Mesaj Girişi
 if prompt := st.chat_input("Buraya yaz..."):
-    if kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
+    # Hızlı Kod Girişi (Yazı kutusundan da kod girilebilsin)
+    if prompt.startswith("SOA-") and not is_premium:
+        ok, msg = activate_premium(conn, username, prompt.strip())
+        if ok: st.balloons(); st.success(msg); st.rerun()
+        else: st.error(msg)
+        
+    elif kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti. Premium alarak devam et.")
     else:
         save_message(conn, username, "user", prompt)
         st.session_state.messages.append({"role":"user", "content":prompt})
@@ -249,13 +302,16 @@ if prompt := st.chat_input("Buraya yaz..."):
             try:
                 system_prompt = f"""
                 Sen 'Okul Asistanı' adında özel bir yapay zekasın. 
-                Asla Google, Gemini veya OpenAI olduğunu söyleme.
-                Seviye: {seviye}, Mod: {mod}, Stil: {persona if is_premium else 'Normal'}
+                Asla kendini Google veya Gemini olarak tanıtma.
+                Seviye: {seviye}, Mod: {mod}, Stil: {persona}
                 Soru: {prompt}
                 """
                 
-                # Model çağrısı (Basitleştirilmiş)
-                res = model.generate_content(system_prompt).text
+                con = [system_prompt]
+                if uploaded_text: con.append(f"Dosya: {uploaded_text}")
+                if uploaded_image: con.append(uploaded_image)
+                
+                res = model.generate_content(con).text
                 box.markdown(res)
                 save_message(conn, username, "assistant", res)
                 
