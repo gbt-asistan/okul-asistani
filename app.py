@@ -24,25 +24,25 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🎨 TASARIM VE GİZLİLİK AYARLARI
+# 🛠️ DÜZELTİLMİŞ CSS (GİRİŞ KUTUSU SORUNU ÇÖZÜLDÜ)
 # ============================================================
 st.markdown("""
 <style>
-    /* 1. GİZLİLİK: Tüm logoları ve menüleri yok et */
-    header {display: none !important;}
-    footer {display: none !important;}
+    /* 1. GİZLİLİK: Gereksiz butonları ve logoları kaldır */
+    header {visibility: hidden !important;}
+    .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
-    .stDeployButton {display: none !important;}
+    footer {display: none !important;}
     [data-testid="stSidebar"] {display: none !important;}
 
-    /* 2. GENEL DÜZEN */
+    /* 2. GENEL DÜZEN - Sohbet kutusu için güvenli boşluk */
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 8rem !important; /* Alt kısımda boşluk olsun ki input sığsın */
+        padding-bottom: 120px !important; /* Sohbet kutusuna yer aç */
     }
 
-    /* 3. KONTROL PANELİ KUTUSU */
+    /* 3. KONTROL PANELİ TASARIMI */
     .control-panel {
         background-color: #1e293b;
         border: 1px solid #334155;
@@ -52,14 +52,20 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    /* 4. YAZI YAZMA KUTUSUNU BÜYÜT (İstediğin Özellik) */
+    /* 4. SOHBET KUTUSU AYARLARI (TIKLAMA SORUNU ÇÖZÜMÜ) */
+    /* Kutuyu biraz büyüt ama işlevselliği bozma */
     .stChatInput textarea {
-        height: 120px !important; /* Yükseklik arttı */
-        min-height: 120px !important;
-        font-size: 16px !important; /* Yazı boyutu büyüdü */
+        min-height: 80px !important;
+        font-size: 16px !important;
+    }
+    
+    /* Sohbet kutusunun olduğu alt barı en öne getir (Tıklanabilsin diye) */
+    [data-testid="stBottom"] {
+        z-index: 9999 !important;
+        background-color: transparent !important;
     }
 
-    /* PREMIUM KUTUSU */
+    /* PREMIUM ROZETİ */
     .premium-badge {
         background: linear-gradient(45deg, #7c3aed, #db2777);
         color: white;
@@ -73,7 +79,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🔒 API VE AKILLI MODEL SEÇİCİ
+# 🔒 API VE MODEL
 # ============================================================
 if "GOOGLE_API_KEY" in st.secrets:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
@@ -83,18 +89,16 @@ else:
 
 try:
     genai.configure(api_key=API_KEY)
-    secilen_model_adi = "gemini-1.5-flash" # Varsayılan hızlı model
+    # Otomatik model seçici
+    secilen_model = "gemini-1.5-flash"
     try:
-        mevcutlar = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        # Varsa Flash kullan, yoksa Pro, yoksa herhangi biri
-        if any('flash' in m.lower() for m in mevcutlar): 
-            secilen_model_adi = next(m for m in mevcutlar if 'flash' in m.lower())
-        elif any('pro' in m.lower() for m in mevcutlar):
-            secilen_model_adi = next(m for m in mevcutlar if 'pro' in m.lower())
+        modeller = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        if any('flash' in m for m in modeller): secilen_model = next(m for m in modeller if 'flash' in m)
+        elif any('pro' in m for m in modeller): secilen_model = next(m for m in modeller if 'pro' in m)
     except: pass
-    model = genai.GenerativeModel(secilen_model_adi)
+    model = genai.GenerativeModel(secilen_model)
 except Exception as e:
-    st.error(f"Bağlantı Hatası: {e}")
+    st.error(f"Hata: {e}")
     st.stop()
 
 # --- VERİTABANI ---
@@ -190,6 +194,8 @@ with st.container():
     if "Dosya" in mod and is_premium:
         st.info("📂 Dosya Yükleme Aktif")
         uploaded_file = st.file_uploader("Dosya Seç", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
+    else:
+        uploaded_file = None # Hata almamak için
     
     if not is_premium:
         with st.expander("🎫 Premium Kodunu Gir"):
@@ -212,9 +218,11 @@ if "Dosya" in mod and is_premium and uploaded_file:
         elif uploaded_file.name.endswith(".docx"): d=Document(uploaded_file); uploaded_text="\n".join([p.text for p in d.paragraphs])
     except: pass
 
+# Geçmişi göster
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
+# YENİ MESAJ GİRİŞİ
 if prompt := st.chat_input("Buraya yaz..."):
     if kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
     else:
@@ -225,12 +233,11 @@ if prompt := st.chat_input("Buraya yaz..."):
         with st.chat_message("assistant"):
             box = st.empty(); box.markdown("...")
             try:
-                # KİMLİK KORUMASI: BURADA GOOGLE İSMİ YASAKLANIYOR
+                # KİMLİK KORUMASI VE TALİMATLAR
                 system_prompt = f"""
-                Sen 'Okul Asistanı' adında özel bir eğitim asistanısın.
-                KİMLİK KURALI: Asla kendini 'Google', 'Gemini' veya başka bir şirketin yapay zekası olarak tanıtma.
-                Eğer seni kimin geliştirdiği sorulursa: 'Ben Okul Asistanı'yım, öğrenciler için özel olarak tasarlandım' de.
-                Başka bir isim veya marka kullanman YASAKTIR.
+                Sen 'Okul Asistanı' adında, öğrenciler için tasarlanmış özel bir yapay zeka asistanısın.
+                KİMLİK KURALI: Asla kendini 'Google', 'Gemini', 'OpenAI' veya başka bir şirketin ürünü olarak tanıtma.
+                Eğer kim olduğun veya kim tarafından geliştirildiğin sorulursa: "Ben Okul Asistanı'yım, senin derslerine yardımcı olmak için buradayım" de.
                 
                 Seviye: {seviye}
                 Mod: {mod}
