@@ -24,25 +24,46 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🛠️ DÜZELTİLMİŞ CSS (GİRİŞ KUTUSU SORUNU ÇÖZÜLDÜ)
+# 🛠️ GÖRÜNÜM DÜZELTME (SOHBET KUTUSU TAMİRİ)
 # ============================================================
 st.markdown("""
 <style>
-    /* 1. GİZLİLİK: Gereksiz butonları ve logoları kaldır */
+    /* 1. GİZLİLİK (Logoları Yok Et) */
     header {visibility: hidden !important;}
     .stDeployButton {display: none !important;}
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
-    footer {display: none !important;}
     [data-testid="stSidebar"] {display: none !important;}
 
-    /* 2. GENEL DÜZEN - Sohbet kutusu için güvenli boşluk */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 120px !important; /* Sohbet kutusuna yer aç */
+    /* 2. FOOTER AYARI (Çok Önemli - Kutunun kaybolmaması için) */
+    /* Display none yaparsak kutu aşağı düşer. Visibility hidden ile yerini koruyoruz ama göstermiyoruz */
+    footer {
+        visibility: hidden !important;
+        height: 0px !important;
     }
 
-    /* 3. KONTROL PANELİ TASARIMI */
+    /* 3. SAYFA DÜZENİ (Sohbet kutusuna yer aç) */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 150px !important; /* Alt kısımda geniş boşluk bırak */
+    }
+
+    /* 4. SOHBET KUTUSU TASARIMI (YUKARI KALDIRMA) */
+    [data-testid="stChatInput"] {
+        bottom: 30px !important; /* Ekranın dibinden 30px yukarı kaldır */
+        padding-bottom: 0px !important;
+    }
+
+    /* Yazı yazılan alanın tasarımı */
+    .stChatInput textarea {
+        background-color: #334155 !important; /* Koyu gri arka plan */
+        color: white !important;
+        border: 1px solid #475569 !important;
+        min-height: 60px !important; /* Yükseklik */
+        border-radius: 12px !important;
+    }
+
+    /* 5. KONTROL PANELİ TASARIMI */
     .control-panel {
         background-color: #1e293b;
         border: 1px solid #334155;
@@ -50,19 +71,6 @@ st.markdown("""
         border-radius: 15px;
         margin-bottom: 20px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    /* 4. SOHBET KUTUSU AYARLARI (TIKLAMA SORUNU ÇÖZÜMÜ) */
-    /* Kutuyu biraz büyüt ama işlevselliği bozma */
-    .stChatInput textarea {
-        min-height: 80px !important;
-        font-size: 16px !important;
-    }
-    
-    /* Sohbet kutusunun olduğu alt barı en öne getir (Tıklanabilsin diye) */
-    [data-testid="stBottom"] {
-        z-index: 9999 !important;
-        background-color: transparent !important;
     }
 
     /* PREMIUM ROZETİ */
@@ -89,9 +97,9 @@ else:
 
 try:
     genai.configure(api_key=API_KEY)
-    # Otomatik model seçici
     secilen_model = "gemini-1.5-flash"
     try:
+        # Hata almamak için güvenli model seçimi
         modeller = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         if any('flash' in m for m in modeller): secilen_model = next(m for m in modeller if 'flash' in m)
         elif any('pro' in m for m in modeller): secilen_model = next(m for m in modeller if 'pro' in m)
@@ -194,8 +202,7 @@ with st.container():
     if "Dosya" in mod and is_premium:
         st.info("📂 Dosya Yükleme Aktif")
         uploaded_file = st.file_uploader("Dosya Seç", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
-    else:
-        uploaded_file = None # Hata almamak için
+    else: uploaded_file = None
     
     if not is_premium:
         with st.expander("🎫 Premium Kodunu Gir"):
@@ -208,7 +215,7 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
-# 💬 SOHBET VE KİMLİK KORUMASI
+# 💬 SOHBET
 # ============================================================
 uploaded_text, uploaded_image = "", None
 if "Dosya" in mod and is_premium and uploaded_file:
@@ -218,11 +225,11 @@ if "Dosya" in mod and is_premium and uploaded_file:
         elif uploaded_file.name.endswith(".docx"): d=Document(uploaded_file); uploaded_text="\n".join([p.text for p in d.paragraphs])
     except: pass
 
-# Geçmişi göster
+# GEÇMİŞİ GÖSTER
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
-# YENİ MESAJ GİRİŞİ
+# MESAJ KUTUSU
 if prompt := st.chat_input("Buraya yaz..."):
     if kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
     else:
@@ -233,7 +240,6 @@ if prompt := st.chat_input("Buraya yaz..."):
         with st.chat_message("assistant"):
             box = st.empty(); box.markdown("...")
             try:
-                # KİMLİK KORUMASI VE TALİMATLAR
                 system_prompt = f"""
                 Sen 'Okul Asistanı' adında, öğrenciler için tasarlanmış özel bir yapay zeka asistanısın.
                 KİMLİK KURALI: Asla kendini 'Google', 'Gemini', 'OpenAI' veya başka bir şirketin ürünü olarak tanıtma.
