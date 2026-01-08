@@ -24,21 +24,25 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🕵️ GİZLİLİK MODU (Menüleri ve Reklamları Gizle)
+# 🕵️ TAM GİZLİLİK VE MOBİL UYUM MODU
 # ============================================================
 st.markdown("""
 <style>
-    /* Üstteki 'Fork' ve GitHub menüsünü gizle */
-    header {visibility: hidden;}
+    /* 1. Üstteki Menü Çubuğunu (Header) GÖRÜNÜR yap (Mobilde menü açılsın diye) */
+    header {visibility: visible !important;}
     
-    /* Alttaki 'Made with Streamlit' yazısını ve renkli menüyü gizle */
-    footer {visibility: hidden;}
-    
-    /* Sağ üstteki seçenekler menüsünü gizle */
-    #MainMenu {visibility: hidden;}
-    
-    /* Deploy butonunu gizle */
+    /* 2. Ama Header içindeki 'Deploy' butonunu ve süslemeleri gizle */
     .stDeployButton {display:none;}
+    [data-testid="stDecoration"] {display:none;}
+    
+    /* 3. Sağ alttaki 'Streamlit' butonlarını (Toolbar) YOK ET */
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    
+    /* 4. En alttaki 'Made with Streamlit' yazısını YOK ET */
+    footer {visibility: hidden !important; display: none !important;}
+    
+    /* 5. Mobilde menü ikonunu (Hamburger) belirginleştir */
+    [data-testid="stSidebarNav"] {display: block !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -48,7 +52,6 @@ st.markdown("""
 if "GOOGLE_API_KEY" in st.secrets:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
 else:
-    # Bilgisayarında test ederken buraya geçici yazabilirsin
     API_KEY = "BURAYA_AIza_ILE_BASLAYAN_UZUN_SIFRENI_YAPISTIR" 
 
 # --- HAFIZA BAŞLANGICI ---
@@ -138,8 +141,6 @@ def temizle_ve_konus(metin):
 
 # --- YAPAY ZEKA BAĞLANTISI ---
 if API_KEY.startswith("BURAYA"):
-    # Eğer GitHub'daysak ve secrets ayarlı değilse hata vermesin diye sessiz kalabiliriz
-    # ama kullanıcıya uyarı vermek iyidir.
     if "GOOGLE_API_KEY" not in st.secrets:
         st.warning("⚠️ API Anahtarı bulunamadı. Lütfen ayarlardan Secrets kısmına ekleyin.")
         st.stop()
