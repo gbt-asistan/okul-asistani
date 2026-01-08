@@ -7,14 +7,6 @@ import os
 import io
 import re
 
-# --- KÜTÜPHANE KONTROLLERİ ---
-try:
-    import pypdf
-    from docx import Document
-    from PIL import Image
-except ImportError:
-    pass
-
 # --- SİTE AYARLARI ---
 st.set_page_config(
     page_title="Okul Asistanı",
@@ -22,6 +14,14 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# --- KÜTÜPHANE KONTROLLERİ ---
+try:
+    import pypdf
+    from docx import Document
+    from PIL import Image
+except ImportError:
+    pass
 
 # --- VERİTABANI BAŞLATMA ---
 def init_db():
@@ -72,37 +72,28 @@ if not st.session_state.username:
     <style>
         header, footer, [data-testid="stToolbar"] {display: none !important;}
         .block-container {
-            padding-top: 50px !important;
-            display: flex;
-            justify-content: center;
+            display: flex; justify-content: center; align-items: center; height: 80vh;
         }
         .login-card {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            text-align: center;
-            width: 100%;
-            max-width: 500px;
-            margin-top: 100px;
+            background-color: #1e293b; border: 1px solid #334155; padding: 40px; 
+            border-radius: 20px; text-align: center; width: 100%; max-width: 400px;
         }
     </style>
     """, unsafe_allow_html=True)
-
-    st.markdown('<div class="login-card"><h1 style="color:white;">🎓 Okul Asistanı</h1>', unsafe_allow_html=True)
-    username_input = st.text_input("Öğrenci Adı", placeholder="Örn: Ahmet")
-    if st.button("Giriş Yap 🚀", use_container_width=True):
-        if username_input:
-            if not get_user(conn, username_input): create_user(conn, username_input)
-            st.session_state.username = username_input
-            st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="login-card"><h1 style="color:white; font-size:2rem;">🎓 Okul Asistanı</h1>', unsafe_allow_html=True)
+        username_input = st.text_input("Adın nedir?", placeholder="Örn: Ahmet")
+        if st.button("Giriş Yap 🚀", use_container_width=True):
+            if username_input:
+                if not get_user(conn, username_input): create_user(conn, username_input)
+                st.session_state.username = username_input
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 
 # ============================================================
-# 🏠 ANA UYGULAMA (SABİT HEADER - HATASIZ)
+# 🏠 ANA UYGULAMA
 # ============================================================
 
 # API
@@ -118,68 +109,51 @@ try:
     model = genai.GenerativeModel(secilen_model)
 except Exception as e: st.error(f"Hata: {e}"); st.stop()
 
-# --- CSS AYARLARI ---
+# --- CSS AYARLARI (KAYDIRMA SORUNUNU ÇÖZEN KOD) ---
 st.markdown("""
 <style>
-    header {visibility: hidden !important;}
-    .stDeployButton, [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stSidebar"], footer {
-        display: none !important;
-    }
+    /* Temel Gizlemeler */
+    header, footer, .stDeployButton, [data-testid="stToolbar"] {display: none !important;}
 
-    /* 1. ÜST BOŞLUK (HEADER ALTINDA KALMAMASI İÇİN) */
+    /* 1. SAYFA DÜZENİ - EN ÖNEMLİ KISIM */
     .block-container {
-        padding-top: 280px !important; 
-        padding-bottom: 120px !important;
+        padding-top: 320px !important; /* Panel yüksekliği kadar boşluk */
+        padding-bottom: 120px !important; /* Sohbet kutusu için boşluk */
         max-width: 1000px !important;
-        display: block !important;
-        height: auto !important;
     }
 
-    /* 2. SABİT (STICKY) HEADER - ÇAPA YÖNTEMİ */
-    div[data-testid="stVerticalBlock"]:has(div#sticky-header-marker) {
+    /* 2. SABİT HEADER (KUTUCUKLARI TUTAN ÇERÇEVE) */
+    /* İlk dikey bloğu bul ve sabitle */
+    div[data-testid="stVerticalBlock"] > div:has(div.fixed-marker) {
         position: fixed !important;
-        top: 0px !important;
-        left: 0px !important;
+        top: 0 !important;
+        left: 0 !important;
         width: 100% !important;
         z-index: 99999 !important;
         background-color: #0f172a !important; 
-        border-bottom: 2px solid #334155; 
-        padding: 1rem 2rem !important;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-        gap: 0.5rem !important;
+        border-bottom: 1px solid #334155;
+        padding: 1rem 1rem 0 1rem !important; /* Alt padding'i kıstım */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
-    /* 3. SOHBET KUTUSU (ALTTA SABİT) */
+    /* 3. SOHBET KUTUSU */
     [data-testid="stChatInput"] {
-        bottom: 30px !important;
+        bottom: 20px !important;
         background: transparent !important;
-        display: flex !important;
-        justify-content: center !important;
     }
     [data-testid="stChatInput"] > div {
         background-color: #1e293b !important;
         border: 1px solid #475569 !important;
-        border-radius: 25px !important;
-        color: white !important;
-        width: 100% !important;
-        max-width: 900px !important;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.3) !important;
-    }
-    .stChatInput textarea {
-        background-color: transparent !important;
-        border: none !important;
+        border-radius: 20px !important;
         color: white !important;
     }
-    
-    /* Başlık ve Rozetler */
+
+    /* TASARIM DETAYLARI */
     .main-title {
-        font-size: 2rem; font-weight: 800; text-align: center; 
-        background: -webkit-linear-gradient(45deg, #fff, #94a3b8);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        margin-bottom: 10px;
+        font-size: 1.8rem; font-weight: 800; text-align: center; color: white; margin-bottom: 5px;
     }
-    .user-badge { background: #334155; color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; }
-    .pro-badge { background: linear-gradient(90deg, #fbbf24, #d946ef); color: white; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; }
+    .user-badge { background: #334155; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
+    .pro-badge { background: linear-gradient(90deg, #fbbf24, #d946ef); color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
 
 </style>
 """, unsafe_allow_html=True)
@@ -190,24 +164,26 @@ kredi, is_premium, premium_expiry = update_credits(conn, username)
 history = get_history(conn, username)
 
 # 📌 SABİT HEADER ALANI
+# Bu container CSS tarafından yakalanıp en tepeye sabitlenecek
 header_container = st.container()
+
 with header_container:
-    # Bu çapa CSS'in burayı bulup sabitlemesini sağlar
-    st.markdown('<div id="sticky-header-marker"></div>', unsafe_allow_html=True)
+    # CSS İşaretçisi (Bunu silme)
+    st.markdown('<div class="fixed-marker"></div>', unsafe_allow_html=True)
     
     # Başlık
     st.markdown('<div class="main-title">🎓 Okul Asistanı</div>', unsafe_allow_html=True)
     
     # Kullanıcı Bilgisi
-    c_info, c_exit = st.columns([5,1])
-    with c_info:
+    c_inf, c_btn = st.columns([5,1])
+    with c_inf:
         if is_premium: st.markdown(f"<span class='pro-badge'>💎 PRO</span> <b>{username}</b>", unsafe_allow_html=True)
         else: st.markdown(f"<span class='user-badge'>ÖĞRENCİ</span> <b>{username}</b> | Hak: {kredi}", unsafe_allow_html=True)
-    with c_exit:
+    with c_btn:
         if st.button("Çıkış", key="logout"):
             st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
-    # Menüler (HATA DÜZELTİLDİ: Değişken isimleri c1, c2, c3 olarak sabitlendi)
+    # Menüler
     c1, c2, c3 = st.columns(3)
     with c1: seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
     with c2: mod = st.selectbox("Mod", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"], label_visibility="collapsed")
@@ -215,7 +191,7 @@ with header_container:
         if is_premium: persona = st.selectbox("Tarz", ["Normal", "Komik", "Disiplinli"], label_visibility="collapsed")
         else: st.selectbox("Tarz", ["Normal"], disabled=True, label_visibility="collapsed"); persona="Normal"
 
-    # Premium Özellikler
+    # Ekstra Özellikler
     if is_premium and "Dosya" in mod:
         st.file_uploader("Dosya", type=['pdf','docx','png'], label_visibility="collapsed")
     
@@ -226,8 +202,10 @@ with header_container:
                 ok, msg = activate_premium(conn, username, kod.strip())
                 if ok: st.balloons(); st.success(msg); st.rerun()
                 else: st.error(msg)
+    
+    st.write("") # Küçük bir boşluk
 
-# 💬 SOHBET GEÇMİŞİ
+# 💬 SOHBET AKIŞI
 uploaded_text, uploaded_image = "", None
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
