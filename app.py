@@ -5,7 +5,7 @@ import datetime
 from gtts import gTTS
 import os
 import io
-import re # Metin temizleme için gerekli
+import re
 
 # --- KÜTÜPHANE KONTROLLERİ ---
 try:
@@ -13,7 +13,7 @@ try:
     from docx import Document
     from PIL import Image
 except ImportError:
-    st.error("Eksik kütüphane var! Terminale şunu yaz: pip install pypdf python-docx gTTS Pillow")
+    st.error("Eksik kütüphane var! requirements.txt dosyasını kontrol et.")
     st.stop()
 
 # --- SİTE AYARLARI ---
@@ -24,15 +24,23 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🟢 API ANAHTARINI BURAYA YAPIŞTIR (Tırnakları Silme!)
+# 🔒 GÜVENLİ API BAĞLANTISI (Streamlit Secrets)
 # ============================================================
-API_KEY = "BURAYA_AIza_ILE_BASLAYAN_UZUN_SIFRENI_YAPISTIR"
+if "GOOGLE_API_KEY" in st.secrets:
+    API_KEY = st.secrets["GOOGLE_API_KEY"]
+else:
+    # Eğer secrets henüz ayarlanmadıysa hata vermemesi için boş geçiyoruz
+    # Ama çalışması için Secrets ayarının yapılmış olması şart.
+    st.warning("⚠️ API Anahtarı bulunamadı. Lütfen ayarlardan Secrets kısmına ekleyin.")
+    st.stop()
 
-# --- HAFIZA BAŞLANGICI ---
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "username" not in st.session_state:
-    st.session_state.username = None
+# --- YAPAY ZEKA BAĞLANTISI ---
+try:
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel("models/gemini-pro")
+except Exception as e:
+    st.error(f"API Bağlantı Hatası: {e}")
+    st.stop()
 
 # --- VERİTABANI İŞLEMLERİ ---
 def init_db():
@@ -105,43 +113,22 @@ def activate_premium(conn, username, code):
     conn.commit()
     return True, "✅ Premium aktif edildi! 🎉"
 
-# --- SES İÇİN METİN TEMİZLEME FONKSİYONU (YENİ) ---
+# --- SES İÇİN METİN TEMİZLEME ---
 def temizle_ve_konus(metin):
-    # 1. Yıldızları (*) ve kalın yazı işaretlerini (**) sil
     temiz_metin = metin.replace("**", "").replace("*", "")
-    
-    # 2. Kareleri (#) ve başlık işaretlerini sil
     temiz_metin = temiz_metin.replace("##", "").replace("#", "")
-    
-    # 3. Tireleri (-) nokta gibi okumaması için boşlukla değiştir
-    # (Ama cümle başındaki madde işaretlerini silebiliriz)
     temiz_metin = re.sub(r'^- ', '', temiz_metin, flags=re.MULTILINE)
-    
-    # 4. Gereksiz boşlukları sil
     temiz_metin = temiz_metin.strip()
-    
     return temiz_metin
 
-# --- YAPAY ZEKA BAĞLANTISI ---
-if API_KEY.startswith("BURAYA"):
-    st.error("Lütfen app.py dosyasındaki API KEY alanına şifrenizi girin.")
-    st.stop()
-
-try:
-    genai.configure(api_key=API_KEY)
-    uygun_model = None
-    for m in genai.list_models():
-        if 'generateContent' in m.supported_generation_methods and 'gemini' in m.name:
-            uygun_model = m.name
-            break
-    if not uygun_model: uygun_model = "models/gemini-pro"
-    model = genai.GenerativeModel(uygun_model)
-except Exception as e:
-    st.error(f"API Hatası: {e}")
-    st.stop()
-
-# --- ARAYÜZ ---
+# --- UYGULAMA BAŞLANGICI ---
 conn = init_db()
+
+# Session State (Hafıza) Kontrolü
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "username" not in st.session_state:
+    st.session_state.username = None
 
 # GİRİŞ EKRANI
 if not st.session_state.username:
@@ -160,45 +147,34 @@ if not st.session_state.username:
                 st.warning("Lütfen bir isim yazın.")
     st.stop()
 
-# --- ANA UYGULAMA ---
+# --- ANA EKRAN ---
 username = st.session_state.username
 kredi, is_premium, premium_expiry = update_credits(conn, username)
 history = get_history(conn, username)
 
-# CSS STİLLERİ
+# CSS Düzenlemeleri (Kutular ve Butonlar için)
 st.markdown("""
 <style>
     .stChatInput textarea { height: 100px; }
-    
-    /* Premium Kutusu */
     .premium-box {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         border: 1px solid #8b5cf6; padding: 20px; border-radius: 12px;
         text-align: center; margin-bottom: 20px;
     }
-    
     .buy-btn {
         background: linear-gradient(90deg, #ec4899, #8b5cf6);
         color: white !important; padding: 10px 20px; border-radius: 8px;
         text-decoration: none; font-weight: bold; display: block; margin-top:10px;
     }
-    
-    /* Seçim Rozetleri */
     .badge {
-        padding: 5px 10px;
-        border-radius: 5px;
-        color: #1e293b;
-        font-weight: bold;
-        font-size: 0.9em;
-        margin-top: 5px;
-        display: inline-block;
-        width: 100%;
-        text-align: center;
+        padding: 5px 10px; border-radius: 5px; color: #1e293b;
+        font-weight: bold; font-size: 0.9em; margin-top: 5px;
+        display: inline-block; width: 100%; text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# SOL PANEL
+# SOL PANEL (MENÜ)
 with st.sidebar:
     st.title("⚙️ Panel")
     if is_premium:
@@ -208,42 +184,16 @@ with st.sidebar:
         st.progress(kredi/5)
     st.divider()
     
-    # 1. SINIF SEÇİMİ
-    seviye_secenekleri = ["🐣 İlkokul", "📘 Ortaokul", "🏫 Lise", "🎓 Üniversite"]
-    seviye = st.selectbox("Sınıf Seviyesi", seviye_secenekleri)
+    # Sınıf Seçimi
+    seviye = st.selectbox("Sınıf Seviyesi", ["🐣 İlkokul", "📘 Ortaokul", "🏫 Lise", "🎓 Üniversite"])
     
-    seviye_renkleri = {
-        "🐣 İlkokul": "#fef08a",
-        "📘 Ortaokul": "#bfdbfe",
-        "🏫 Lise": "#bbf7d0",
-        "🎓 Üniversite": "#e9d5ff"
-    }
-    st.markdown(f'<div class="badge" style="background-color: {seviye_renkleri[seviye]};">Seçilen: {seviye}</div>', unsafe_allow_html=True)
-
-    st.write("") 
-
-    # 2. MOD SEÇİMİ
-    mod_secenekleri = [
-        "❓ Soru Çözümü", 
-        "📚 Konu Anlatımı", 
-        "📝 Kompozisyon Yaz", 
-        "💬 Sohbet", 
-        "🏠 Ödev Yardımı", 
-        "📂 Dosya Analizi (Premium)"
-    ]
-    mod = st.selectbox("Çalışma Modu", mod_secenekleri)
+    # Mod Seçimi
+    mod = st.selectbox("Çalışma Modu", [
+        "❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", 
+        "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Premium)"
+    ])
     
-    mod_renkleri = {
-        "❓ Soru Çözümü": "#fca5a5",
-        "📚 Konu Anlatımı": "#fdba74",
-        "📝 Kompozisyon Yaz": "#fcd34d",
-        "💬 Sohbet": "#86efac",
-        "🏠 Ödev Yardımı": "#67e8f9",
-        "📂 Dosya Analizi (Premium)": "#d8b4fe"
-    }
-    st.markdown(f'<div class="badge" style="background-color: {mod_renkleri[mod]};">Aktif Mod: {mod}</div>', unsafe_allow_html=True)
-    
-    # ÖĞRETMEN TARZI
+    # Öğretmen Tarzı
     st.subheader("👨‍🏫 Öğretmen Tarzı")
     if is_premium:
         persona = st.radio("Seç:", ["Normal", "Komik", "Disiplinli", "Samimi"])
@@ -253,16 +203,16 @@ with st.sidebar:
         
     st.divider()
     
-    # PREMIUM KUTUSU
+    # Premium Kutusu
     st.markdown("<div class='premium-box'>", unsafe_allow_html=True)
     if not is_premium:
         st.markdown("### 🚀 Premium Ol")
         st.markdown("Sınırsız Soru, Dosya Yükleme, Sesli Dinleme")
         st.markdown("<h2 style='color:white'>49 TL / 3 Ay</h2>", unsafe_allow_html=True)
-        st.markdown('<a href="https://www.shopier.com/" target="_blank" class="buy-btn">SATIN AL</a>', unsafe_allow_html=True)
+        st.markdown('<a href="#" class="buy-btn">SATIN AL</a>', unsafe_allow_html=True) # Linki sonra eklersin
         st.markdown("---")
-        kod_giris = st.text_input("Kodunuz Var mı?", placeholder="SOA-XXXX-XXXX")
-        if st.button("Kodu Aktifleştir"):
+        kod_giris = st.text_input("Kod Gir", placeholder="SOA-XXXX")
+        if st.button("Aktifleştir"):
             if kod_giris:
                 basari, mesaj = activate_premium(conn, username, kod_giris.strip())
                 if basari: st.balloons(); st.success(mesaj); st.rerun()
@@ -276,102 +226,73 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# ANA EKRAN
+# ANA BAŞLIK
 st.title("🎓 Okul Asistanı")
 
-# KOMPOZİSYON BİLGİ NOTU
+# Bilgi Notları
 if "Kompozisyon" in mod:
-    st.info("📝 **Kompozisyon Modu:** Lütfen aşağıya yazmak istediğiniz konuyu veya ana fikri girin. (Örn: 'Doğa sevgisi' veya 'Teknolojinin zararları')")
+    st.info("📝 Kompozisyon Modu: Konuyu aşağıya yaz, ben senin için yazayım.")
 
-# DOSYA YÜKLEME
+# Dosya Yükleme (Sadece Premium)
 uploaded_text = ""
 uploaded_image = None
 if "Dosya Analizi" in mod:
     if is_premium:
-        st.info("📄 PDF, Word veya Resim (PNG, JPG) yükle.")
-        uploaded_file = st.file_uploader("Dosya Yükle", type=['pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg'])
-        
+        uploaded_file = st.file_uploader("Dosya Yükle", type=['pdf', 'docx', 'txt', 'png', 'jpg'])
         if uploaded_file:
+            # Basit okuma işlemleri (Hata olmaması için try-except içinde)
             try:
                 if uploaded_file.name.endswith(".pdf"):
                     pdf_reader = pypdf.PdfReader(uploaded_file)
                     for page in pdf_reader.pages: uploaded_text += page.extract_text()
-                    st.success("PDF okundu!")
-                elif uploaded_file.name.endswith(".docx"):
-                    doc = Document(uploaded_file)
-                    for para in doc.paragraphs: uploaded_text += para.text + "\n"
-                    st.success("Word okundu!")
-                elif uploaded_file.name.endswith(('.png', '.jpg', '.jpeg')):
+                    st.success("PDF Yüklendi!")
+                elif uploaded_file.name.endswith(('.png', '.jpg')):
                     uploaded_image = Image.open(uploaded_file)
-                    st.image(uploaded_image, caption="Yüklenen Resim", width=300)
-                    st.success("Resim yüklendi!")
-                elif uploaded_file.name.endswith(".txt"):
-                    uploaded_text = str(uploaded_file.read(), "utf-8")
-                    st.success("Metin okundu!")
+                    st.image(uploaded_image, width=300)
+                    st.success("Resim Yüklendi!")
+                # Diğer formatlar buraya eklenebilir
             except Exception as e:
-                st.error(f"Dosya hatası: {e}")
+                st.error(f"Dosya okuma hatası: {e}")
     else:
-        st.warning("🔒 Bu özellik Premium üyelere özeldir.")
+        st.warning("🔒 Dosya yüklemek için Premium olmalısın.")
 
-# GEÇMİŞİ GÖSTER
+# GEÇMİŞ MESAJLARI GÖSTER
 for role, content in history:
     with st.chat_message(role):
         st.markdown(content)
+# Yeni oturum mesajları (History'de yoksa)
 if len(history) == 0:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# SORU ALANI
-prompt_text = "Sorunu yaz..."
-if "Kompozisyon" in mod:
-    prompt_text = "Kompozisyon konusunu buraya yaz..."
-elif "Sohbet" in mod:
-    prompt_text = "Sohbet etmek için bir şeyler yaz..."
+# KULLANICI GİRİŞ ALANI
+prompt_text = "Sorunu buraya yaz..."
+if "Kompozisyon" in mod: prompt_text = "Kompozisyon konusunu yaz..."
 
 if prompt := st.chat_input(prompt_text):
     
+    # Kredi Kontrolü
     if kredi <= 0 and not is_premium:
-        st.error("Günlük hakkın doldu. Premium alarak devam et.")
+        st.error("Günlük hakkın doldu. Yarın gel veya Premium al.")
     else:
+        # Mesajı Kaydet ve Göster
         save_message(conn, username, "user", prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
+        # Yapay Zeka Cevabı
         with st.chat_message("assistant"):
             msg_box = st.empty()
             msg_box.markdown("Düşünüyorum... 🧠")
             
             try:
-                persona_prompt = ""
-                if persona == "Komik": persona_prompt = "Çok esprili ve komik anlat."
-                elif persona == "Disiplinli": persona_prompt = "Kısa, net ve ciddi anlat."
-                elif persona == "Samimi": persona_prompt = "Samimi bir arkadaş gibi anlat."
-                
-                # MODA ÖZEL TALİMATLAR
-                task_prompt = ""
-                if "Kompozisyon" in mod:
-                    task_prompt = "Verilen konu hakkında Giriş, Gelişme ve Sonuç bölümleri olan, başlığı olan, etkileyici ve edebi bir kompozisyon yaz."
-                elif "Sohbet" in mod:
-                    task_prompt = "Kullanıcıyla günlük, samimi bir sohbet et. Öğretici olmak zorunda değilsin, arkadaşça konuş."
-                
-                # KİMLİK KORUMASI VE TALİMATLAR
-                system_prompt = f"""
-                Sen 'Okul Asistanı' adında yapay zeka destekli bir eğitim asistanısın.
-                ÖNEMLİ KURAL: Asla kendine 'Gemini', 'Google', 'GPT' veya 'OpenAI' deme.
-                Eğer kimin olduğu sorulursa sadece 'Ben Süper Okul Asistanı'yım' de.
-                
-                Seviye: {seviye}.
-                Mod: {mod}.
-                Öğretmen Tarzı: {persona_prompt}
-                Görev: {task_prompt}
-                
-                Soru/Konu: {prompt}
-                """
+                # Prompt Hazırlığı
+                system_prompt = f"Sen Okul Asistanısın. Seviye: {seviye}. Mod: {mod}. Stil: {persona}. Soru: {prompt}"
                 
                 content_parts = [system_prompt]
-                if uploaded_text: content_parts.append(f"\nDOSYA İÇERİĞİ:\n{uploaded_text}\n")
+                if uploaded_text: content_parts.append(f"\nDosya Metni: {uploaded_text}")
                 if uploaded_image: content_parts.append(uploaded_image)
 
                 response = model.generate_content(content_parts)
@@ -380,20 +301,19 @@ if prompt := st.chat_input(prompt_text):
                 msg_box.markdown(cevap)
                 save_message(conn, username, "assistant", cevap)
                 
+                # Kredi Düşme
                 if not is_premium:
                     deduct_credit(conn, username)
                 
+                # Sesli Okuma (Premium)
                 if is_premium:
                     try:
-                        # --- DÜZELTİLEN KISIM ---
-                        # Cevabı önce temizle (yıldızları sil), sonra sese çevir
-                        temiz_ses_metni = temizle_ve_konus(cevap)
-                        
-                        tts = gTTS(text=temiz_ses_metni, lang='tr')
+                        tts_text = temizle_ve_konus(cevap)
+                        tts = gTTS(text=tts_text, lang='tr')
                         audio_bytes = io.BytesIO()
                         tts.write_to_fp(audio_bytes)
                         st.audio(audio_bytes, format='audio/mp3')
                     except: pass
 
             except Exception as e:
-                msg_box.error(f"Hata: {e}")
+                msg_box.error(f"Hata oluştu: {e}")
