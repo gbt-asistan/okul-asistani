@@ -24,11 +24,11 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🎨 GÖRÜNÜM VE GİZLİLİK AYARLARI (BEĞENDİĞİN TASARIM)
+# 🎨 TASARIM VE GİZLİLİK AYARLARI
 # ============================================================
 st.markdown("""
 <style>
-    /* GİZLİLİK: Tüm logoları ve menüleri yok et */
+    /* 1. GİZLİLİK: Tüm logoları ve menüleri yok et */
     header {display: none !important;}
     footer {display: none !important;}
     [data-testid="stToolbar"] {display: none !important;}
@@ -36,13 +36,13 @@ st.markdown("""
     .stDeployButton {display: none !important;}
     [data-testid="stSidebar"] {display: none !important;}
 
-    /* GENEL DÜZEN */
+    /* 2. GENEL DÜZEN */
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 5rem !important;
+        padding-bottom: 8rem !important; /* Alt kısımda boşluk olsun ki input sığsın */
     }
 
-    /* KONTROL PANELİ KUTUSU (YATAY TASARIM) */
+    /* 3. KONTROL PANELİ KUTUSU */
     .control-panel {
         background-color: #1e293b;
         border: 1px solid #334155;
@@ -50,6 +50,13 @@ st.markdown("""
         border-radius: 15px;
         margin-bottom: 20px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 4. YAZI YAZMA KUTUSUNU BÜYÜT (İstediğin Özellik) */
+    .stChatInput textarea {
+        height: 120px !important; /* Yükseklik arttı */
+        min-height: 120px !important;
+        font-size: 16px !important; /* Yazı boyutu büyüdü */
     }
 
     /* PREMIUM KUTUSU */
@@ -66,7 +73,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🔒 API VE AKILLI MODEL SEÇİCİ (HATA DÜZELTİLDİ)
+# 🔒 API VE AKILLI MODEL SEÇİCİ
 # ============================================================
 if "GOOGLE_API_KEY" in st.secrets:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
@@ -74,33 +81,18 @@ else:
     st.warning("⚠️ API Anahtarı eksik.")
     st.stop()
 
-# --- YAPAY ZEKA BAĞLANTISI ---
 try:
     genai.configure(api_key=API_KEY)
-    
-    # Varsayılan olarak en güvenli modeli seç
-    secilen_model_adi = "gemini-pro"
-    
-    # Sunucudaki mevcut modelleri listele ve en iyisini bul
+    secilen_model_adi = "gemini-1.5-flash" # Varsayılan hızlı model
     try:
         mevcutlar = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # Eğer Flash varsa onu kullan (Daha hızlı)
-        for m in mevcutlar:
-            if "flash" in m.lower():
-                secilen_model_adi = m
-                break
-        # Flash yoksa listedeki herhangi bir Gemini modelini al
-        else:
-            for m in mevcutlar:
-                if "gemini" in m.lower():
-                    secilen_model_adi = m
-                    break
-    except:
-        pass # Listeleme hatası olursa 'gemini-pro' ile devam et
-
+        # Varsa Flash kullan, yoksa Pro, yoksa herhangi biri
+        if any('flash' in m.lower() for m in mevcutlar): 
+            secilen_model_adi = next(m for m in mevcutlar if 'flash' in m.lower())
+        elif any('pro' in m.lower() for m in mevcutlar):
+            secilen_model_adi = next(m for m in mevcutlar if 'pro' in m.lower())
+    except: pass
     model = genai.GenerativeModel(secilen_model_adi)
-
 except Exception as e:
     st.error(f"Bağlantı Hatası: {e}")
     st.stop()
@@ -167,54 +159,34 @@ history = get_history(conn, username)
 
 # BAŞLIK
 c1, c2 = st.columns([3, 1])
-with c1:
-    st.title("🎓 Okul Asistanı")
+with c1: st.title("🎓 Okul Asistanı")
 with c2:
     if st.button("Çıkış Yap 🚪"):
         st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
 # ============================================================
-# 🎛️ KONTROL PANELİ (SENİN BEĞENDİĞİN YATAY TASARIM)
+# 🎛️ KONTROL PANELİ
 # ============================================================
 with st.container():
     st.markdown('<div class="control-panel">', unsafe_allow_html=True)
     
-    # 1. SATIR: BİLGİ VE PREMIUM
     k1, k2 = st.columns([3, 1])
     with k1:
         if is_premium: st.markdown(f"👤 **{username}** <span class='premium-badge'>💎 PREMIUM</span>", unsafe_allow_html=True)
         else: st.write(f"👤 **{username}** | Kalan Hak: **{kredi}/5**")
     with k2:
         if not is_premium:
-            if st.button("💎 Premium Ol"):
-                st.toast("Aşağıdan kod girebilirsin 👇")
+            if st.button("💎 Premium Ol"): st.toast("Aşağıdan kod girebilirsin 👇")
 
     st.divider()
 
-    # 2. SATIR: AYARLAR (YAN YANA)
     col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        seviye = st.selectbox("Sınıf Seviyesi", ["🐣 İlkokul", "📘 Ortaokul", "🏫 Lise", "🎓 Üniversite"])
-    
-    with col2:
-        mod = st.selectbox("Çalışma Modu", [
-            "❓ Soru Çözümü", 
-            "📚 Konu Anlatımı", 
-            "📝 Kompozisyon Yaz", 
-            "💬 Sohbet", 
-            "🏠 Ödev Yardımı", 
-            "📂 Dosya Analizi (Pro)"
-        ])
-        
+    with col1: seviye = st.selectbox("Sınıf Seviyesi", ["🐣 İlkokul", "📘 Ortaokul", "🏫 Lise", "🎓 Üniversite"])
+    with col2: mod = st.selectbox("Çalışma Modu", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"])
     with col3:
-        if is_premium:
-            persona = st.selectbox("Öğretmen Tarzı", ["😐 Normal", "😂 Komik", "🫡 Disiplinli", "🥰 Samimi"])
-        else:
-            st.selectbox("Öğretmen Tarzı", ["🔒 Normal (Premium)"], disabled=True)
-            persona = "Normal"
+        if is_premium: persona = st.selectbox("Öğretmen Tarzı", ["😐 Normal", "😂 Komik", "🫡 Disiplinli", "🥰 Samimi"])
+        else: st.selectbox("Öğretmen Tarzı", ["🔒 Normal (Premium)"], disabled=True); persona = "Normal"
 
-    # DOSYA VE PREMIUM KOD ALANI
     if "Dosya" in mod and is_premium:
         st.info("📂 Dosya Yükleme Aktif")
         uploaded_file = st.file_uploader("Dosya Seç", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
@@ -230,7 +202,7 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
-# 💬 SOHBET GEÇMİŞİ VE KUTUSU
+# 💬 SOHBET VE KİMLİK KORUMASI
 # ============================================================
 uploaded_text, uploaded_image = "", None
 if "Dosya" in mod and is_premium and uploaded_file:
@@ -253,8 +225,20 @@ if prompt := st.chat_input("Buraya yaz..."):
         with st.chat_message("assistant"):
             box = st.empty(); box.markdown("...")
             try:
-                sys = f"Sen Okul Asistanısın. Seviye: {seviye}. Mod: {mod}. Stil: {persona}. Soru: {prompt}"
-                con = [sys]
+                # KİMLİK KORUMASI: BURADA GOOGLE İSMİ YASAKLANIYOR
+                system_prompt = f"""
+                Sen 'Okul Asistanı' adında özel bir eğitim asistanısın.
+                KİMLİK KURALI: Asla kendini 'Google', 'Gemini' veya başka bir şirketin yapay zekası olarak tanıtma.
+                Eğer seni kimin geliştirdiği sorulursa: 'Ben Okul Asistanı'yım, öğrenciler için özel olarak tasarlandım' de.
+                Başka bir isim veya marka kullanman YASAKTIR.
+                
+                Seviye: {seviye}
+                Mod: {mod}
+                Stil: {persona}
+                Soru: {prompt}
+                """
+                
+                con = [system_prompt]
                 if uploaded_text: con.append(f"Dosya: {uploaded_text}")
                 if uploaded_image: con.append(uploaded_image)
                 
