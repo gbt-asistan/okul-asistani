@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🛠️ GÖRÜNÜM DÜZELTME (SOL TARAFTAKİ BOZUKLUK GİDERİLDİ)
+# 🛠️ GÖRÜNÜM DÜZELTME (SOL TARAFTAKİ ÇIKINTI TAMİRİ)
 # ============================================================
 st.markdown("""
 <style>
@@ -43,48 +43,41 @@ st.markdown("""
         max-width: 1000px !important;
     }
 
-    /* 3. SOHBET KUTUSU TAMİRİ (KESİN ÇÖZÜM) */
+    /* 3. SOHBET KUTUSU TAMİRİ (KATMAN SORUNU ÇÖZÜLDÜ) */
     
-    /* Ana Taşıyıcıyı Ortala ve Sabitle */
+    /* EN DIŞ KATMAN: Bunu şeffaf yapıyoruz ki arkadan renk taşmasın */
     [data-testid="stChatInput"] {
-        bottom: 40px !important; /* Biraz daha yukarı al */
-        background: transparent !important; /* Arka planı temizle */
-        display: flex !important;
-        justify-content: center !important; /* İçeriği ortala */
+        background-color: transparent !important;
+        background: transparent !important;
     }
 
-    /* Yazı Kutusunun Dış Çerçevesi (Gri Alan Burası Olacak) */
+    /* İÇ KATMAN (Asıl Kutu): Rengi ve şekli buna veriyoruz */
     [data-testid="stChatInput"] > div {
-        background-color: #334155 !important; /* Koyu gri renk */
-        border: 1px solid #475569 !important; /* İnce çerçeve */
-        border-radius: 25px !important; /* Tam oval köşeler */
-        width: 100% !important;
-        max-width: 900px !important; /* Genişlik sınırı */
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important; /* Hafif gölge */
+        background-color: #1e293b !important; /* İstediğimiz Koyu Renk */
+        border: 1px solid #334155 !important; /* Çerçeve */
+        border-radius: 20px !important; /* Oval Köşeler */
+        color: white !important;
+        box-shadow: none !important; /* Gölgeyi kaldır ki taşma yapmasın */
     }
 
-    /* İçerideki Yazı Alanı (Şeffaf Yapıyoruz ki Kayma Olmasın) */
+    /* EN İÇ (Yazı Alanı): Bunu şeffaf yapıyoruz, rengi üstten alıyor */
     .stChatInput textarea {
-        background-color: transparent !important; /* Rengi üstteki kutudan alsın */
-        border: none !important; /* Kenarlığı kaldır (çift çizgi olmasın) */
+        background-color: transparent !important;
+        border: none !important;
         color: white !important;
-        min-height: 50px !important;
-        padding: 15px !important; /* Yazı kenarlara yapışmasın */
-        font-size: 16px !important;
-    }
-    
-    /* Odaklanınca (Tıklayınca) oluşan mavi çizgiyi kaldır */
-    .stChatInput textarea:focus {
         box-shadow: none !important;
     }
-
-    /* Gönder Butonu Rengi */
+    
+    /* Odaklanınca çıkan çizgiyi kaldır */
+    .stChatInput textarea:focus {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    
+    /* Gönder Butonu */
     [data-testid="stChatInputSubmitButton"] {
         background: transparent !important;
         color: #94a3b8 !important;
-    }
-    [data-testid="stChatInputSubmitButton"]:hover {
-        color: white !important;
     }
 
     /* 4. KONTROL PANELİ TASARIMI */
@@ -238,7 +231,7 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
-# 💬 SOHBET VE KİMLİK KORUMASI
+# 💬 SOHBET
 # ============================================================
 uploaded_text, uploaded_image = "", None
 if "Dosya" in mod and is_premium and uploaded_file:
@@ -248,7 +241,7 @@ if "Dosya" in mod and is_premium and uploaded_file:
         elif uploaded_file.name.endswith(".docx"): d=Document(uploaded_file); uploaded_text="\n".join([p.text for p in d.paragraphs])
     except: pass
 
-# Geçmişi göster
+# GEÇMİŞİ GÖSTER
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
