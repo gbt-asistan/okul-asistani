@@ -109,21 +109,20 @@ try:
     model = genai.GenerativeModel(secilen_model)
 except Exception as e: st.error(f"Hata: {e}"); st.stop()
 
-# --- CSS AYARLARI (KAYDIRMA SORUNUNU ÇÖZEN KOD) ---
+# --- CSS AYARLARI ---
 st.markdown("""
 <style>
     /* Temel Gizlemeler */
     header, footer, .stDeployButton, [data-testid="stToolbar"] {display: none !important;}
 
-    /* 1. SAYFA DÜZENİ - EN ÖNEMLİ KISIM */
+    /* 1. SAYFA DÜZENİ */
     .block-container {
         padding-top: 320px !important; /* Panel yüksekliği kadar boşluk */
         padding-bottom: 120px !important; /* Sohbet kutusu için boşluk */
         max-width: 1000px !important;
     }
 
-    /* 2. SABİT HEADER (KUTUCUKLARI TUTAN ÇERÇEVE) */
-    /* İlk dikey bloğu bul ve sabitle */
+    /* 2. SABİT HEADER (ÇAPA YÖNTEMİ) */
     div[data-testid="stVerticalBlock"] > div:has(div.fixed-marker) {
         position: fixed !important;
         top: 0 !important;
@@ -132,7 +131,7 @@ st.markdown("""
         z-index: 99999 !important;
         background-color: #0f172a !important; 
         border-bottom: 1px solid #334155;
-        padding: 1rem 1rem 0 1rem !important; /* Alt padding'i kıstım */
+        padding: 1rem 1rem 0 1rem !important;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
@@ -164,11 +163,10 @@ kredi, is_premium, premium_expiry = update_credits(conn, username)
 history = get_history(conn, username)
 
 # 📌 SABİT HEADER ALANI
-# Bu container CSS tarafından yakalanıp en tepeye sabitlenecek
 header_container = st.container()
 
 with header_container:
-    # CSS İşaretçisi (Bunu silme)
+    # CSS İşaretçisi
     st.markdown('<div class="fixed-marker"></div>', unsafe_allow_html=True)
     
     # Başlık
@@ -183,15 +181,23 @@ with header_container:
         if st.button("Çıkış", key="logout"):
             st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
-    # Menüler
+    # Menüler (YENİ MOD EKLENDİ)
     c1, c2, c3 = st.columns(3)
     with c1: seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
-    with c2: mod = st.selectbox("Mod", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"], label_visibility="collapsed")
+    with c2: mod = st.selectbox("Mod", [
+        "❓ Soru Çözümü", 
+        "📚 Konu Anlatımı", 
+        "📝 Kompozisyon Yaz", 
+        "💬 Sohbet", 
+        "🏠 Ödev Yardımı",
+        "🌍 Tüm Diller Öğretmeni (Pro)",  # <--- YENİ MOD BURADA
+        "📂 Dosya Analizi (Pro)"
+    ], label_visibility="collapsed")
     with c3:
         if is_premium: persona = st.selectbox("Tarz", ["Normal", "Komik", "Disiplinli"], label_visibility="collapsed")
         else: st.selectbox("Tarz", ["Normal"], disabled=True, label_visibility="collapsed"); persona="Normal"
 
-    # Ekstra Özellikler
+    # Ekstra Özellikler (Sadece Premium)
     if is_premium and "Dosya" in mod:
         st.file_uploader("Dosya", type=['pdf','docx','png'], label_visibility="collapsed")
     
@@ -203,7 +209,7 @@ with header_container:
                 if ok: st.balloons(); st.success(msg); st.rerun()
                 else: st.error(msg)
     
-    st.write("") # Küçük bir boşluk
+    st.write("") 
 
 # 💬 SOHBET AKIŞI
 uploaded_text, uploaded_image = "", None
@@ -212,12 +218,20 @@ for r, c in history:
 
 # MESAJ GİRİŞİ
 if prompt := st.chat_input("Buraya yaz..."):
+    # Hızlı Kod Girişi
     if prompt.startswith("SOA-") and not is_premium:
         ok, msg = activate_premium(conn, username, prompt.strip())
         if ok: st.balloons(); st.success(msg); st.rerun()
         else: st.error(msg)
-    elif kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
+    
+    # Kısıtlamalar
+    elif "Pro" in mod and not is_premium:
+        st.error("🔒 Bu mod sadece Premium üyeler içindir. Lütfen geçiş yapın.")
+    elif kredi <= 0 and not is_premium:
+        st.error("Günlük hakkın bitti.")
+        
     else:
+        # Mesajı kaydet ve işle
         save_message(conn, username, "user", prompt)
         st.session_state.messages.append({"role":"user", "content":prompt})
         with st.chat_message("user"): st.markdown(prompt)
@@ -225,11 +239,18 @@ if prompt := st.chat_input("Buraya yaz..."):
         with st.chat_message("assistant"):
             box = st.empty(); box.markdown("...")
             try:
+                # Mod'a göre sistem mesajı
                 system_prompt = f"Sen 'Okul Asistanı' adında yapay zekasın. Seviye: {seviye}, Mod: {mod}, Stil: {persona}. Soru: {prompt}"
+                
+                # Eğer Dil Öğretmeni Modu ise ek talimat
+                if "Dil" in mod:
+                    system_prompt += "\nRolün: Profesyonel bir dil öğretmenisin. Kullanıcının istediği dilde çeviri yap, gramer anlat veya pratik yap."
+
                 con = [system_prompt]
                 res = model.generate_content(con).text
                 box.markdown(res)
                 save_message(conn, username, "assistant", res)
+                
                 if not is_premium: deduct_credit(conn, username)
                 if is_premium:
                     try: 
