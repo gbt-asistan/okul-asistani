@@ -215,7 +215,7 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
-# 💬 SOHBET
+# 💬 SOHBET VE KİMLİK KORUMASI
 # ============================================================
 uploaded_text, uploaded_image = "", None
 if "Dosya" in mod and is_premium and uploaded_file:
@@ -225,11 +225,11 @@ if "Dosya" in mod and is_premium and uploaded_file:
         elif uploaded_file.name.endswith(".docx"): d=Document(uploaded_file); uploaded_text="\n".join([p.text for p in d.paragraphs])
     except: pass
 
-# GEÇMİŞİ GÖSTER
+# Geçmişi göster
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
-# MESAJ KUTUSU
+# YENİ MESAJ GİRİŞİ
 if prompt := st.chat_input("Buraya yaz..."):
     if kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
     else:
@@ -240,6 +240,7 @@ if prompt := st.chat_input("Buraya yaz..."):
         with st.chat_message("assistant"):
             box = st.empty(); box.markdown("...")
             try:
+                # KİMLİK KORUMASI VE TALİMATLAR
                 system_prompt = f"""
                 Sen 'Okul Asistanı' adında, öğrenciler için tasarlanmış özel bir yapay zeka asistanısın.
                 KİMLİK KURALI: Asla kendini 'Google', 'Gemini', 'OpenAI' veya başka bir şirketin ürünü olarak tanıtma.
