@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🛠️ GÖRÜNÜM DÜZELTME (SOL TARAFTAKİ ÇIKINTI TAMİRİ)
+# 🛠️ "SABİT PANEL" VE GÖRÜNÜM AYARLARI
 # ============================================================
 st.markdown("""
 <style>
@@ -36,69 +36,66 @@ st.markdown("""
     [data-testid="stSidebar"] {display: none !important;}
     footer {visibility: hidden !important; height: 0px !important;}
 
-    /* 2. SAYFA DÜZENİ */
+    /* 2. ANA SAYFA DÜZENİ (ÇOK ÖNEMLİ) */
+    /* Üstten büyük bir boşluk bırakıyoruz ki, sabit panel mesajların üstüne binmesin */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 190px !important; /* Panel yüksekliği kadar boşluk */
         padding-bottom: 120px !important;
         max-width: 1000px !important;
     }
 
-    /* 3. SOHBET KUTUSU TAMİRİ (KATMAN SORUNU ÇÖZÜLDÜ) */
+    /* 3. SABİT (STICKY) KONTROL PANELİ */
+    .fixed-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background-color: #0f172a !important; /* Koyu Lacivert Arka Plan */
+        z-index: 99999 !important; /* Her şeyin üstünde dursun */
+        border-bottom: 1px solid #334155;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        padding: 10px 20px;
+    }
     
-    /* EN DIŞ KATMAN: Bunu şeffaf yapıyoruz ki arkadan renk taşmasın */
+    /* Panel içindeki içerik düzeni */
+    .header-content {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    /* 4. SOHBET KUTUSU AYARLARI */
     [data-testid="stChatInput"] {
-        background-color: transparent !important;
+        bottom: 30px !important;
         background: transparent !important;
     }
-
-    /* İÇ KATMAN (Asıl Kutu): Rengi ve şekli buna veriyoruz */
     [data-testid="stChatInput"] > div {
-        background-color: #1e293b !important; /* İstediğimiz Koyu Renk */
-        border: 1px solid #334155 !important; /* Çerçeve */
-        border-radius: 20px !important; /* Oval Köşeler */
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 20px !important;
         color: white !important;
-        box-shadow: none !important; /* Gölgeyi kaldır ki taşma yapmasın */
+        box-shadow: none !important;
     }
-
-    /* EN İÇ (Yazı Alanı): Bunu şeffaf yapıyoruz, rengi üstten alıyor */
     .stChatInput textarea {
         background-color: transparent !important;
         border: none !important;
         color: white !important;
-        box-shadow: none !important;
-    }
-    
-    /* Odaklanınca çıkan çizgiyi kaldır */
-    .stChatInput textarea:focus {
-        box-shadow: none !important;
-        outline: none !important;
-    }
-    
-    /* Gönder Butonu */
-    [data-testid="stChatInputSubmitButton"] {
-        background: transparent !important;
-        color: #94a3b8 !important;
-    }
-
-    /* 4. KONTROL PANELİ TASARIMI */
-    .control-panel {
-        background-color: #1e293b;
-        border: 1px solid #334155;
-        padding: 15px;
-        border-radius: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     /* PREMIUM ROZETİ */
     .premium-badge {
         background: linear-gradient(45deg, #7c3aed, #db2777);
         color: white;
-        padding: 5px 10px;
-        border-radius: 8px;
+        padding: 2px 8px;
+        border-radius: 6px;
         font-weight: bold;
-        font-size: 0.8rem;
-        display: inline-block;
+        font-size: 0.7rem;
+        margin-left: 5px;
+    }
+    
+    /* Paneldeki Yazıları Biraz Küçült (Yer kaplamasın) */
+    .small-text {
+        font-size: 0.85rem;
+        color: #94a3b8;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -185,53 +182,45 @@ username = st.session_state.username
 kredi, is_premium, premium_expiry = update_credits(conn, username)
 history = get_history(conn, username)
 
-# BAŞLIK
-c1, c2 = st.columns([3, 1])
-with c1: st.title("🎓 Okul Asistanı")
-with c2:
-    if st.button("Çıkış Yap 🚪"):
-        st.session_state.username = None; st.session_state.messages = []; st.rerun()
-
 # ============================================================
-# 🎛️ KONTROL PANELİ
+# 📌 SABİT ÜST PANEL (FIXED HEADER)
 # ============================================================
+# Bu container normal akışın dışında, en üstte sabit duracak
 with st.container():
-    st.markdown('<div class="control-panel">', unsafe_allow_html=True)
+    st.markdown('<div class="fixed-header"><div class="header-content">', unsafe_allow_html=True)
     
-    k1, k2 = st.columns([3, 1])
-    with k1:
-        if is_premium: st.markdown(f"👤 **{username}** <span class='premium-badge'>💎 PREMIUM</span>", unsafe_allow_html=True)
-        else: st.write(f"👤 **{username}** | Kalan Hak: **{kredi}/5**")
-    with k2:
+    # Üst Satır: Başlık ve Kullanıcı Bilgisi
+    h1, h2 = st.columns([3, 1])
+    with h1:
+        if is_premium: st.markdown(f"🎓 **Okul Asistanı** | 👤 {username} <span class='premium-badge'>PRO</span>", unsafe_allow_html=True)
+        else: st.markdown(f"🎓 **Okul Asistanı** | 👤 {username} (Hak: {kredi})", unsafe_allow_html=True)
+    with h2:
+        if st.button("Çıkış", key="logout_btn", use_container_width=True):
+            st.session_state.username = None; st.session_state.messages = []; st.rerun()
+
+    # Alt Satır: Ayarlar (Mod, Sınıf)
+    c1, c2, c3 = st.columns([1, 2, 1])
+    with c1:
+        seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
+    with c2:
+        mod = st.selectbox("Mod", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"], label_visibility="collapsed")
+    with c3:
         if not is_premium:
-            if st.button("💎 Premium Ol"): st.toast("Aşağıdan kod girebilirsin 👇")
+            if st.button("💎 Premium Ol", use_container_width=True):
+                st.toast("Kodu aşağıya sohbet kutusuna yaz: SOA-XXXX")
+        else:
+            persona = st.selectbox("Stil", ["Normal", "Komik", "Disiplinli", "Samimi"], label_visibility="collapsed")
+            if "persona" not in locals(): persona = "Normal"
 
-    st.divider()
-
-    col1, col2, col3 = st.columns(3)
-    with col1: seviye = st.selectbox("Sınıf Seviyesi", ["🐣 İlkokul", "📘 Ortaokul", "🏫 Lise", "🎓 Üniversite"])
-    with col2: mod = st.selectbox("Çalışma Modu", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"])
-    with col3:
-        if is_premium: persona = st.selectbox("Öğretmen Tarzı", ["😐 Normal", "😂 Komik", "🫡 Disiplinli", "🥰 Samimi"])
-        else: st.selectbox("Öğretmen Tarzı", ["🔒 Normal (Premium)"], disabled=True); persona = "Normal"
-
+    # Dosya Yükleme (Varsa hemen burada küçük şekilde göster)
     if "Dosya" in mod and is_premium:
-        st.info("📂 Dosya Yükleme Aktif")
-        uploaded_file = st.file_uploader("Dosya Seç", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
+        uploaded_file = st.file_uploader("Dosya", type=['pdf','docx','png','jpg'], label_visibility="collapsed")
     else: uploaded_file = None
-    
-    if not is_premium:
-        with st.expander("🎫 Premium Kodunu Gir"):
-            kod = st.text_input("Kod:", placeholder="SOA-XXXX")
-            if st.button("Kodu Onayla"):
-                ok, msg = activate_premium(conn, username, kod.strip())
-                if ok: st.balloons(); st.success(msg); st.rerun()
-                else: st.error(msg)
-                
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div></div>', unsafe_allow_html=True)
 
 # ============================================================
-# 💬 SOHBET
+# 💬 SOHBET GEÇMİŞİ
 # ============================================================
 uploaded_text, uploaded_image = "", None
 if "Dosya" in mod and is_premium and uploaded_file:
@@ -241,13 +230,27 @@ if "Dosya" in mod and is_premium and uploaded_file:
         elif uploaded_file.name.endswith(".docx"): d=Document(uploaded_file); uploaded_text="\n".join([p.text for p in d.paragraphs])
     except: pass
 
-# GEÇMİŞİ GÖSTER
+# Premium Kod Aktivasyonu (Sohbetten komut olarak)
+if not is_premium:
+    # Kullanıcıya bilgi ver (Toast veya geçici mesaj)
+    pass 
+
+# Geçmiş mesajları göster
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
 # YENİ MESAJ GİRİŞİ
 if prompt := st.chat_input("Buraya yaz..."):
-    if kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
+    
+    # KOD GİRİŞİ KONTROLÜ (Sohbet kutusundan kod girmek için pratik yol)
+    if prompt.startswith("SOA-") and not is_premium:
+        ok, msg = activate_premium(conn, username, prompt.strip())
+        if ok: st.balloons(); st.success(msg); st.rerun()
+        else: st.error(msg)
+    
+    # NORMAL SOHBET
+    elif kredi <= 0 and not is_premium:
+        st.error("Günlük hakkın bitti.")
     else:
         save_message(conn, username, "user", prompt)
         st.session_state.messages.append({"role":"user", "content":prompt})
@@ -256,15 +259,13 @@ if prompt := st.chat_input("Buraya yaz..."):
         with st.chat_message("assistant"):
             box = st.empty(); box.markdown("...")
             try:
-                # KİMLİK KORUMASI VE TALİMATLAR
                 system_prompt = f"""
                 Sen 'Okul Asistanı' adında, öğrenciler için tasarlanmış özel bir yapay zeka asistanısın.
-                KİMLİK KURALI: Asla kendini 'Google', 'Gemini', 'OpenAI' veya başka bir şirketin ürünü olarak tanıtma.
-                Eğer kim olduğun veya kim tarafından geliştirildiğin sorulursa: "Ben Okul Asistanı'yım, senin derslerine yardımcı olmak için buradayım" de.
+                KİMLİK KURALI: Asla kendini 'Google', 'Gemini', 'OpenAI' olarak tanıtma.
                 
                 Seviye: {seviye}
                 Mod: {mod}
-                Stil: {persona}
+                Stil: {persona if is_premium else "Normal"}
                 Soru: {prompt}
                 """
                 
