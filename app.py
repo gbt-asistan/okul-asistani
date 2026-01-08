@@ -29,15 +29,14 @@ st.set_page_config(
 if "GOOGLE_API_KEY" in st.secrets:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
 else:
-    # Eğer secrets henüz ayarlanmadıysa hata vermemesi için boş geçiyoruz
-    # Ama çalışması için Secrets ayarının yapılmış olması şart.
     st.warning("⚠️ API Anahtarı bulunamadı. Lütfen ayarlardan Secrets kısmına ekleyin.")
     st.stop()
 
-# --- YAPAY ZEKA BAĞLANTISI ---
+# --- YAPAY ZEKA BAĞLANTISI (GÜNCELLENDİ: gemini-1.5-flash) ---
 try:
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel("models/gemini-pro")
+    # Eski 'gemini-pro' yerine yeni ve hızlı 'gemini-1.5-flash' kullanıyoruz
+    model = genai.GenerativeModel("gemini-1.5-flash")
 except Exception as e:
     st.error(f"API Bağlantı Hatası: {e}")
     st.stop()
@@ -209,7 +208,7 @@ with st.sidebar:
         st.markdown("### 🚀 Premium Ol")
         st.markdown("Sınırsız Soru, Dosya Yükleme, Sesli Dinleme")
         st.markdown("<h2 style='color:white'>49 TL / 3 Ay</h2>", unsafe_allow_html=True)
-        st.markdown('<a href="#" class="buy-btn">SATIN AL</a>', unsafe_allow_html=True) # Linki sonra eklersin
+        st.markdown('<a href="#" class="buy-btn">SATIN AL</a>', unsafe_allow_html=True) 
         st.markdown("---")
         kod_giris = st.text_input("Kod Gir", placeholder="SOA-XXXX")
         if st.button("Aktifleştir"):
@@ -240,7 +239,7 @@ if "Dosya Analizi" in mod:
     if is_premium:
         uploaded_file = st.file_uploader("Dosya Yükle", type=['pdf', 'docx', 'txt', 'png', 'jpg'])
         if uploaded_file:
-            # Basit okuma işlemleri (Hata olmaması için try-except içinde)
+            # Basit okuma işlemleri
             try:
                 if uploaded_file.name.endswith(".pdf"):
                     pdf_reader = pypdf.PdfReader(uploaded_file)
@@ -250,7 +249,13 @@ if "Dosya Analizi" in mod:
                     uploaded_image = Image.open(uploaded_file)
                     st.image(uploaded_image, width=300)
                     st.success("Resim Yüklendi!")
-                # Diğer formatlar buraya eklenebilir
+                elif uploaded_file.name.endswith(".docx"):
+                    doc = Document(uploaded_file)
+                    for para in doc.paragraphs: uploaded_text += para.text + "\n"
+                    st.success("Word Yüklendi!")
+                elif uploaded_file.name.endswith(".txt"):
+                    uploaded_text = str(uploaded_file.read(), "utf-8")
+                    st.success("Metin Yüklendi!")
             except Exception as e:
                 st.error(f"Dosya okuma hatası: {e}")
     else:
@@ -289,7 +294,13 @@ if prompt := st.chat_input(prompt_text):
             
             try:
                 # Prompt Hazırlığı
-                system_prompt = f"Sen Okul Asistanısın. Seviye: {seviye}. Mod: {mod}. Stil: {persona}. Soru: {prompt}"
+                system_prompt = f"""Sen Okul Asistanısın. 
+                Kullanıcı Seviyesi: {seviye}
+                Mod: {mod}
+                Öğretmen Stili: {persona}
+                Asla kendine Gemini veya Google deme. Sen 'Okul Asistanı'sın.
+                
+                Soru/Mesaj: {prompt}"""
                 
                 content_parts = [system_prompt]
                 if uploaded_text: content_parts.append(f"\nDosya Metni: {uploaded_text}")
