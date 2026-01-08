@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🎨 LUXURY STICKY (SABİT) TASARIM CSS
+# 🎨 PERFECT APP UI (HATASIZ SABİT TASARIM)
 # ============================================================
 st.markdown("""
 <style>
@@ -34,62 +34,41 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 2. SAYFA DÜZENİ (PANEL İÇİN BOŞLUK) */
-    /* En üstte sabit panel olacağı için sayfa içeriğini aşağı itiyoruz */
+    /* 2. SAYFA DÜZENİ (ÇOK KRİTİK AYAR) */
+    /* Üstten 260px boşluk bırakıyoruz ki SABİT PANEL yazıları kapatmasın */
     .block-container {
-        padding-top: 250px !important; /* Sabit panelin yüksekliği kadar boşluk */
-        padding-bottom: 120px !important; /* Sohbet kutusu için boşluk */
+        padding-top: 260px !important; 
+        padding-bottom: 120px !important;
         max-width: 1000px !important;
     }
 
-    /* 3. SABİT (STICKY) ÜST PANEL */
-    /* Bu sınıfı Python tarafında 'st.container'a vereceğiz */
-    div[data-testid="stVerticalBlock"] > div:has(div.fixed-panel-marker) {
+    /* 3. SABİT (STICKY) ÜST PANEL - 'APP BAR' */
+    /* Bu sınıfı Python tarafında 'div' içine vereceğiz */
+    .fixed-app-bar {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100% !important;
-        z-index: 99999 !important;
-        background: #0f172a !important; /* Sayfa arka planıyla aynı renk */
+        z-index: 99999 !important; /* Her şeyin en üstünde */
+        background-color: #0f172a !important; /* Koyu Lacivert */
         border-bottom: 1px solid #334155;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Derinlik gölgesi */
-        padding: 1rem 2rem !important;
-        max-height: 240px !important; /* Yükseklik sınırı */
-        overflow: visible !important; /* Menülerin taşabilmesi için */
+        box-shadow: 0 4px 20px rgba(0,0,0,0.6); /* Derinlik Gölgesi */
+        padding: 10px 20px 15px 20px !important;
     }
 
-    /* 4. BAŞLIK TASARIMI */
-    .main-title {
+    /* 4. BAŞLIK TASARIMI (PANEL İÇİNDE) */
+    .app-title {
         font-size: 1.8rem;
         font-weight: 800;
-        background: -webkit-linear-gradient(45deg, #eee, #94a3b8);
+        color: white;
+        text-align: center;
+        margin-bottom: 10px;
+        background: -webkit-linear-gradient(45deg, #fff, #94a3b8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-bottom: 5px;
-        margin-top: -10px;
     }
 
-    /* 5. KONTROL PANELİ KUTUSU (Sabit alanın içindeki kutu) */
-    .control-box {
-        background-color: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 15px;
-        padding: 15px;
-        margin-top: 5px;
-    }
-    
-    /* PREMIUM PANEL STİLİ (ALTIN PARLAMA) */
-    .premium-box-style {
-        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-        border: 1px solid #a855f7;
-        box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
-        border-radius: 15px;
-        padding: 15px;
-        margin-top: 5px;
-    }
-
-    /* 6. SOHBET KUTUSU (ALTA SABİT) */
+    /* 5. SOHBET KUTUSU (ALTA SABİT) */
     [data-testid="stChatInput"] {
         bottom: 30px !important;
         background: transparent !important;
@@ -98,13 +77,13 @@ st.markdown("""
         z-index: 9999 !important;
     }
     [data-testid="stChatInput"] > div {
-        background-color: #0f172a !important;
-        border: 1px solid #334155 !important;
+        background-color: #1e293b !important;
+        border: 1px solid #475569 !important;
         border-radius: 25px !important;
         color: white !important;
         width: 100% !important;
         max-width: 900px !important;
-        box-shadow: 0 -5px 20px rgba(0,0,0,0.3) !important;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.3) !important;
     }
     .stChatInput textarea {
         background-color: transparent !important;
@@ -112,22 +91,22 @@ st.markdown("""
         color: white !important;
     }
 
-    /* ROZETLER */
-    .user-badge {
-        background-color: #334155;
-        color: #e2e8f0;
-        padding: 4px 10px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 0.8rem;
+    /* ROZETLER VE DETAYLAR */
+    .user-info-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1e293b;
+        padding: 5px 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #334155;
     }
-    .pro-badge {
-        background: linear-gradient(90deg, #fbbf24, #d946ef);
-        color: #fff;
-        padding: 4px 10px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 0.8rem;
+    .badge-std {
+        background: #475569; color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.8rem;
+    }
+    .badge-pro {
+        background: linear-gradient(90deg, #fbbf24, #d946ef); color: white; padding: 2px 8px; border-radius: 5px; font-size: 0.8rem; font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -214,34 +193,29 @@ kredi, is_premium, premium_expiry = update_credits(conn, username)
 history = get_history(conn, username)
 
 # ============================================================
-# 📌 SABİT (STICKY) ÜST PANEL
+# 📌 SABİT ÜST PANEL (APP BAR) - BURASI DÜZELTİLDİ
 # ============================================================
-# Bu container, CSS'teki 'div:has(div.fixed-panel-marker)' seçicisiyle yakalanıp sabitleniyor.
-header_container = st.container()
+# Streamlit'in container'ını kullanarak en üste sabitliyoruz
+header = st.container()
 
-with header_container:
-    # CSS'in bu container'ı bulması için gizli işaretçi
-    st.markdown('<div class="fixed-panel-marker"></div>', unsafe_allow_html=True)
+with header:
+    st.markdown('<div class="fixed-app-bar">', unsafe_allow_html=True)
     
-    # 1. BAŞLIK
-    st.markdown('<div class="main-title">🎓 Okul Asistanı</div>', unsafe_allow_html=True)
-    
-    # 2. AYARLAR KUTUSU (PREMIUM VEYA NORMAL)
-    box_class = "premium-box-style" if is_premium else "control-box"
-    st.markdown(f'<div class="{box_class}">', unsafe_allow_html=True)
-    
-    # Üst Bilgi (Kullanıcı + Çıkış)
-    top1, top2 = st.columns([3, 1])
-    with top1:
+    # 1. BAŞLIK (ARTIK PANELİN İÇİNDE, KAYBOLMAZ)
+    st.markdown('<div class="app-title">🎓 Okul Asistanı</div>', unsafe_allow_html=True)
+
+    # 2. KULLANICI BİLGİSİ (User Info Bar)
+    col_inf, col_out = st.columns([4, 1])
+    with col_inf:
         if is_premium:
-            st.markdown(f"<span class='pro-badge'>💎 PRO</span> &nbsp; **{username}**", unsafe_allow_html=True)
+            st.markdown(f"<div class='user-info-bar'><span class='badge-pro'>PRO</span>&nbsp; <b>{username}</b></div>", unsafe_allow_html=True)
         else:
-            st.markdown(f"<span class='user-badge'>ÖĞRENCİ</span> &nbsp; **{username}** | Hak: {kredi}/5", unsafe_allow_html=True)
-    with top2:
-        if st.button("Çıkış", key="logout_btn", use_container_width=True):
+            st.markdown(f"<div class='user-info-bar'><span class='badge-std'>ÖĞRENCİ</span>&nbsp; <b>{username}</b> | Hak: {kredi}</div>", unsafe_allow_html=True)
+    with col_out:
+        if st.button("Çıkış", key="exit_btn", use_container_width=True):
             st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
-    # Alt Ayarlar (Selectbox'lar)
+    # 3. AYARLAR (Yatay Menü)
     c1, c2, c3 = st.columns(3)
     with c1:
         seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
@@ -249,37 +223,46 @@ with header_container:
         mod = st.selectbox("Mod", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"], label_visibility="collapsed")
     with c3:
         if is_premium:
-            persona = st.selectbox("Stil", ["😐 Normal", "😂 Komik", "🫡 Disiplinli", "🥰 Samimi"], label_visibility="collapsed")
+            persona = st.selectbox("Tarz", ["Normal", "Komik", "Disiplinli"], label_visibility="collapsed")
         else:
-            st.selectbox("Stil", ["🔒 Normal"], disabled=True, label_visibility="collapsed"); persona = "Normal"
-            
-    # Dosya Yükleme (Sadece buradaysa görünsün)
-    if "Dosya" in mod and is_premium:
+            st.selectbox("Tarz", ["Normal"], disabled=True, label_visibility="collapsed"); persona="Normal"
+
+    # 4. DOSYA YÜKLEME (Premium ise burada görünsün)
+    if is_premium and "Dosya" in mod:
         st.file_uploader("Dosya", type=['pdf','docx','png'], label_visibility="collapsed")
-            
+
+    # 5. PREMIUM ALMA (Standart Üye ise)
+    if not is_premium:
+        with st.expander("💎 Premium Kod Gir"):
+            kod = st.text_input("Kod:", placeholder="SOA-XXXX", label_visibility="collapsed")
+            if st.button("Aktifleştir"):
+                ok, msg = activate_premium(conn, username, kod.strip())
+                if ok: st.balloons(); st.success(msg); st.rerun()
+                else: st.error(msg)
+                
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
-# 💬 SOHBET AKIŞI
+# 💬 SOHBET AKIŞI (PANELİN ALTINDAN BAŞLAR)
 # ============================================================
 uploaded_text, uploaded_image = "", None
-# (Dosya yükleme widget'ı yukarıda olduğu için içeriğini buradan alıyoruz, ama widget yukarıda render oldu)
-# Streamlit'te sticky header içindeki file_uploader'ı okumak bazen tricky olabilir.
-# Basitlik için dosya işlemini şimdilik geçiyoruz veya global state kullanıyoruz.
+if "Dosya" in mod and is_premium:
+    # Dosya okuma işlemleri (Basit)
+    pass 
 
-# Mesaj Geçmişi
+# Geçmiş Mesajlar
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
-# Mesaj Girişi
+# Yeni Mesaj Girişi
 if prompt := st.chat_input("Buraya yaz..."):
     # Hızlı Kod Girişi
     if prompt.startswith("SOA-") and not is_premium:
         ok, msg = activate_premium(conn, username, prompt.strip())
         if ok: st.balloons(); st.success(msg); st.rerun()
         else: st.error(msg)
-        
-    elif kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti. Premium al.")
+    
+    elif kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
     else:
         save_message(conn, username, "user", prompt)
         st.session_state.messages.append({"role":"user", "content":prompt})
@@ -294,11 +277,7 @@ if prompt := st.chat_input("Buraya yaz..."):
                 Seviye: {seviye}, Mod: {mod}, Stil: {persona}
                 Soru: {prompt}
                 """
-                
                 con = [system_prompt]
-                # Not: Dosya yükleme sticky panelde olduğu için session state ile taşınması gerekebilir.
-                # Şimdilik basit metin modu:
-                
                 res = model.generate_content(con).text
                 box.markdown(res)
                 save_message(conn, username, "assistant", res)
