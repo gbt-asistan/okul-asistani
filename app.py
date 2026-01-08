@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🛠️ GÖRÜNÜM DÜZELTME (SOHBET KUTUSU SOL HİZALAMA TAMİRİ)
+# 🛠️ GÖRÜNÜM DÜZELTME (SOL TARAFTAKİ BOZUKLUK GİDERİLDİ)
 # ============================================================
 st.markdown("""
 <style>
@@ -39,28 +39,52 @@ st.markdown("""
     /* 2. SAYFA DÜZENİ */
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 150px !important;
-        max-width: 1000px !important; /* İçeriği ortala ve sınırla */
+        padding-bottom: 120px !important;
+        max-width: 1000px !important;
     }
 
-    /* 3. SOHBET KUTUSU TAMİRİ (SOL TARAFI DÜZELTME) */
+    /* 3. SOHBET KUTUSU TAMİRİ (KESİN ÇÖZÜM) */
+    
+    /* Ana Taşıyıcıyı Ortala ve Sabitle */
     [data-testid="stChatInput"] {
-        bottom: 30px !important;
-        left: 50% !important; /* Ekranın ortasına it */
-        transform: translateX(-50%) !important; /* Tam merkeze oturt */
-        width: 90% !important; /* Mobilde kenarlardan boşluk bırak */
-        max-width: 1000px !important; /* PC'de sonsuza kadar uzamasın */
-        padding-inline: 0px !important; /* İç boşlukları sıfırla */
+        bottom: 40px !important; /* Biraz daha yukarı al */
+        background: transparent !important; /* Arka planı temizle */
+        display: flex !important;
+        justify-content: center !important; /* İçeriği ortala */
     }
 
-    /* Yazı yazılan alanın tasarımı */
+    /* Yazı Kutusunun Dış Çerçevesi (Gri Alan Burası Olacak) */
+    [data-testid="stChatInput"] > div {
+        background-color: #334155 !important; /* Koyu gri renk */
+        border: 1px solid #475569 !important; /* İnce çerçeve */
+        border-radius: 25px !important; /* Tam oval köşeler */
+        width: 100% !important;
+        max-width: 900px !important; /* Genişlik sınırı */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important; /* Hafif gölge */
+    }
+
+    /* İçerideki Yazı Alanı (Şeffaf Yapıyoruz ki Kayma Olmasın) */
     .stChatInput textarea {
-        background-color: #334155 !important;
+        background-color: transparent !important; /* Rengi üstteki kutudan alsın */
+        border: none !important; /* Kenarlığı kaldır (çift çizgi olmasın) */
         color: white !important;
-        border: 1px solid #475569 !important;
-        min-height: 60px !important;
-        border-radius: 12px !important;
-        padding: 15px !important; /* Yazı içerde ferah dursun */
+        min-height: 50px !important;
+        padding: 15px !important; /* Yazı kenarlara yapışmasın */
+        font-size: 16px !important;
+    }
+    
+    /* Odaklanınca (Tıklayınca) oluşan mavi çizgiyi kaldır */
+    .stChatInput textarea:focus {
+        box-shadow: none !important;
+    }
+
+    /* Gönder Butonu Rengi */
+    [data-testid="stChatInputSubmitButton"] {
+        background: transparent !important;
+        color: #94a3b8 !important;
+    }
+    [data-testid="stChatInputSubmitButton"]:hover {
+        color: white !important;
     }
 
     /* 4. KONTROL PANELİ TASARIMI */
