@@ -65,19 +65,16 @@ if "messages" not in st.session_state: st.session_state.messages = []
 if "username" not in st.session_state: st.session_state.username = None
 
 # ============================================================
-# 🚪 1. BÖLÜM: GİRİŞ EKRANI (SAĞLAM VE ORTALI)
+# 🚪 GİRİŞ EKRANI
 # ============================================================
 if not st.session_state.username:
     st.markdown("""
     <style>
         header, footer, [data-testid="stToolbar"] {display: none !important;}
         .block-container {
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
+            padding-top: 50px !important;
             display: flex;
-            align-items: center;
             justify-content: center;
-            height: 100vh;
         }
         .login-card {
             background-color: #1e293b;
@@ -87,32 +84,25 @@ if not st.session_state.username:
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
+            margin-top: 100px;
         }
-        .login-title {
-            font-size: 2rem;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 20px;
-        }
-        .stButton button { width: 100%; margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-    with st.container():
-        st.markdown('<div class="login-card"><div class="login-title">🎓 Okul Asistanı</div>', unsafe_allow_html=True)
-        username_input = st.text_input("Öğrenci Adı", placeholder="Örn: Ahmet")
-        if st.button("Giriş Yap 🚀"):
-            if username_input:
-                if not get_user(conn, username_input): create_user(conn, username_input)
-                st.session_state.username = username_input
-                st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-card"><h1 style="color:white;">🎓 Okul Asistanı</h1>', unsafe_allow_html=True)
+    username_input = st.text_input("Öğrenci Adı", placeholder="Örn: Ahmet")
+    if st.button("Giriş Yap 🚀", use_container_width=True):
+        if username_input:
+            if not get_user(conn, username_input): create_user(conn, username_input)
+            st.session_state.username = username_input
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 
 # ============================================================
-# 🏠 2. BÖLÜM: ANA UYGULAMA (SABİT HEADER İLE)
+# 🏠 ANA UYGULAMA (SABİT HEADER - HATASIZ)
 # ============================================================
 
 # API
@@ -128,7 +118,7 @@ try:
     model = genai.GenerativeModel(secilen_model)
 except Exception as e: st.error(f"Hata: {e}"); st.stop()
 
-# --- ANA EKRAN CSS ---
+# --- CSS AYARLARI ---
 st.markdown("""
 <style>
     header {visibility: hidden !important;}
@@ -136,8 +126,7 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 1. ANA SAYFA BOŞLUĞU (HEADER İÇİN) */
-    /* Bu değer Header'ın yüksekliği kadar olmalı ki içerik altında kalsın */
+    /* 1. ÜST BOŞLUK (HEADER ALTINDA KALMAMASI İÇİN) */
     .block-container {
         padding-top: 280px !important; 
         padding-bottom: 120px !important;
@@ -146,22 +135,23 @@ st.markdown("""
         height: auto !important;
     }
 
-    /* 2. SABİT (STICKY) HEADER */
-    .sticky-header {
+    /* 2. SABİT (STICKY) HEADER - ÇAPA YÖNTEMİ */
+    div[data-testid="stVerticalBlock"]:has(div#sticky-header-marker) {
         position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
+        top: 0px !important;
+        left: 0px !important;
         width: 100% !important;
         z-index: 99999 !important;
-        background-color: #0f172a !important; /* Arka plan rengi */
-        border-bottom: 1px solid #334155;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        padding: 10px 20px 10px 20px !important;
+        background-color: #0f172a !important; 
+        border-bottom: 2px solid #334155; 
+        padding: 1rem 2rem !important;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        gap: 0.5rem !important;
     }
 
     /* 3. SOHBET KUTUSU (ALTTA SABİT) */
     [data-testid="stChatInput"] {
-        bottom: 20px !important;
+        bottom: 30px !important;
         background: transparent !important;
         display: flex !important;
         justify-content: center !important;
@@ -180,14 +170,17 @@ st.markdown("""
         border: none !important;
         color: white !important;
     }
-
+    
     /* Başlık ve Rozetler */
-    .header-title {
-        font-size: 1.8rem; font-weight: 800; text-align: center; color: white; margin-bottom: 5px;
+    .main-title {
+        font-size: 2rem; font-weight: 800; text-align: center; 
+        background: -webkit-linear-gradient(45deg, #fff, #94a3b8);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
     }
-    .user-info {
-        background: #1e293b; padding: 5px 10px; border-radius: 8px; border: 1px solid #334155; font-size: 0.9rem;
-    }
+    .user-badge { background: #334155; color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; }
+    .pro-badge { background: linear-gradient(90deg, #fbbf24, #d946ef); color: white; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -199,29 +192,30 @@ history = get_history(conn, username)
 # 📌 SABİT HEADER ALANI
 header_container = st.container()
 with header_container:
-    st.markdown('<div class="sticky-header">', unsafe_allow_html=True)
+    # Bu çapa CSS'in burayı bulup sabitlemesini sağlar
+    st.markdown('<div id="sticky-header-marker"></div>', unsafe_allow_html=True)
     
     # Başlık
-    st.markdown('<div class="header-title">🎓 Okul Asistanı</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-title">🎓 Okul Asistanı</div>', unsafe_allow_html=True)
     
     # Kullanıcı Bilgisi
     c_info, c_exit = st.columns([5,1])
     with c_info:
-        if is_premium: st.markdown(f"<div class='user-info'>💎 PRO | <b>{username}</b></div>", unsafe_allow_html=True)
-        else: st.markdown(f"<div class='user-info'>👤 <b>{username}</b> | Hak: {kredi}</div>", unsafe_allow_html=True)
+        if is_premium: st.markdown(f"<span class='pro-badge'>💎 PRO</span> <b>{username}</b>", unsafe_allow_html=True)
+        else: st.markdown(f"<span class='user-badge'>ÖĞRENCİ</span> <b>{username}</b> | Hak: {kredi}", unsafe_allow_html=True)
     with c_exit:
         if st.button("Çıkış", key="logout"):
             st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
-    # Menüler
-    col1, col2, col3 = st.columns(3)
-    with col1: seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
-    with col2: mod = st.selectbox("Mod", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"], label_visibility="collapsed")
+    # Menüler (HATA DÜZELTİLDİ: Değişken isimleri c1, c2, c3 olarak sabitlendi)
+    c1, c2, c3 = st.columns(3)
+    with c1: seviye = st.selectbox("Sınıf", ["İlkokul", "Ortaokul", "Lise", "Üniversite"], label_visibility="collapsed")
+    with c2: mod = st.selectbox("Mod", ["❓ Soru Çözümü", "📚 Konu Anlatımı", "📝 Kompozisyon Yaz", "💬 Sohbet", "🏠 Ödev Yardımı", "📂 Dosya Analizi (Pro)"], label_visibility="collapsed")
     with c3:
         if is_premium: persona = st.selectbox("Tarz", ["Normal", "Komik", "Disiplinli"], label_visibility="collapsed")
         else: st.selectbox("Tarz", ["Normal"], disabled=True, label_visibility="collapsed"); persona="Normal"
 
-    # Ekstra Özellikler
+    # Premium Özellikler
     if is_premium and "Dosya" in mod:
         st.file_uploader("Dosya", type=['pdf','docx','png'], label_visibility="collapsed")
     
@@ -232,8 +226,6 @@ with header_container:
                 ok, msg = activate_premium(conn, username, kod.strip())
                 if ok: st.balloons(); st.success(msg); st.rerun()
                 else: st.error(msg)
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # 💬 SOHBET GEÇMİŞİ
 uploaded_text, uploaded_image = "", None
