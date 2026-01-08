@@ -5,7 +5,7 @@ import datetime
 from gtts import gTTS
 import os
 import io
-import re # Metin temizleme için gerekli
+import re
 
 # --- KÜTÜPHANE KONTROLLERİ ---
 try:
@@ -24,15 +24,32 @@ st.set_page_config(
 )
 
 # ============================================================
+# 🕵️ GİZLİLİK MODU (Menüleri ve Reklamları Gizle)
+# ============================================================
+st.markdown("""
+<style>
+    /* Üstteki 'Fork' ve GitHub menüsünü gizle */
+    header {visibility: hidden;}
+    
+    /* Alttaki 'Made with Streamlit' yazısını ve renkli menüyü gizle */
+    footer {visibility: hidden;}
+    
+    /* Sağ üstteki seçenekler menüsünü gizle */
+    #MainMenu {visibility: hidden;}
+    
+    /* Deploy butonunu gizle */
+    .stDeployButton {display:none;}
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
 # 🔒 GÜVENLİ API BAĞLANTISI (Streamlit Secrets)
 # ============================================================
-# Önce sunucudaki gizli kasaya bakar, yoksa (bilgisayarındaysan) hata vermez.
 if "GOOGLE_API_KEY" in st.secrets:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
 else:
-    # Bilgisayarında test ederken buraya geçici yazabilirsin ama
-    # GitHub'a yüklerken burayı BOŞ bırak veya sil.
-    API_KEY = "BURAYA_AIza_ILE_BASLAYAN_UZUN_SIFRENI_YAPISTIR"
+    # Bilgisayarında test ederken buraya geçici yazabilirsin
+    API_KEY = "BURAYA_AIza_ILE_BASLAYAN_UZUN_SIFRENI_YAPISTIR" 
 
 # --- HAFIZA BAŞLANGICI ---
 if "messages" not in st.session_state:
@@ -111,27 +128,21 @@ def activate_premium(conn, username, code):
     conn.commit()
     return True, "✅ Premium aktif edildi! 🎉"
 
-# --- SES İÇİN METİN TEMİZLEME FONKSİYONU (YENİ) ---
+# --- SES İÇİN METİN TEMİZLEME FONKSİYONU ---
 def temizle_ve_konus(metin):
-    # 1. Yıldızları (*) ve kalın yazı işaretlerini (**) sil
     temiz_metin = metin.replace("**", "").replace("*", "")
-    
-    # 2. Kareleri (#) ve başlık işaretlerini sil
     temiz_metin = temiz_metin.replace("##", "").replace("#", "")
-    
-    # 3. Tireleri (-) nokta gibi okumaması için boşlukla değiştir
-    # (Ama cümle başındaki madde işaretlerini silebiliriz)
     temiz_metin = re.sub(r'^- ', '', temiz_metin, flags=re.MULTILINE)
-    
-    # 4. Gereksiz boşlukları sil
     temiz_metin = temiz_metin.strip()
-    
     return temiz_metin
 
 # --- YAPAY ZEKA BAĞLANTISI ---
 if API_KEY.startswith("BURAYA"):
-    st.error("Lütfen app.py dosyasındaki API KEY alanına şifrenizi girin.")
-    st.stop()
+    # Eğer GitHub'daysak ve secrets ayarlı değilse hata vermesin diye sessiz kalabiliriz
+    # ama kullanıcıya uyarı vermek iyidir.
+    if "GOOGLE_API_KEY" not in st.secrets:
+        st.warning("⚠️ API Anahtarı bulunamadı. Lütfen ayarlardan Secrets kısmına ekleyin.")
+        st.stop()
 
 try:
     genai.configure(api_key=API_KEY)
@@ -391,7 +402,6 @@ if prompt := st.chat_input(prompt_text):
                 
                 if is_premium:
                     try:
-                        # --- DÜZELTİLEN KISIM ---
                         # Cevabı önce temizle (yıldızları sil), sonra sese çevir
                         temiz_ses_metni = temizle_ve_konus(cevap)
                         
