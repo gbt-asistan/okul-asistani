@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🎨 YENİ MODERN TASARIM VE GİZLİLİK CSS
+# 🎨 GÖRÜNÜM VE GİZLİLİK AYARLARI (BEĞENDİĞİN TASARIM)
 # ============================================================
 st.markdown("""
 <style>
@@ -42,7 +42,7 @@ st.markdown("""
         padding-bottom: 5rem !important;
     }
 
-    /* KONTROL PANELİ KUTUSU (YENİ TASARIM) */
+    /* KONTROL PANELİ KUTUSU (YATAY TASARIM) */
     .control-panel {
         background-color: #1e293b;
         border: 1px solid #334155;
@@ -66,7 +66,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 🔒 API BAĞLANTISI
+# 🔒 API VE AKILLI MODEL SEÇİCİ (HATA DÜZELTİLDİ)
 # ============================================================
 if "GOOGLE_API_KEY" in st.secrets:
     API_KEY = st.secrets["GOOGLE_API_KEY"]
@@ -74,12 +74,36 @@ else:
     st.warning("⚠️ API Anahtarı eksik.")
     st.stop()
 
+# --- YAPAY ZEKA BAĞLANTISI ---
 try:
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-except:
-    try: model = genai.GenerativeModel("gemini-pro")
-    except: st.error("Model hatası."); st.stop()
+    
+    # Varsayılan olarak en güvenli modeli seç
+    secilen_model_adi = "gemini-pro"
+    
+    # Sunucudaki mevcut modelleri listele ve en iyisini bul
+    try:
+        mevcutlar = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        # Eğer Flash varsa onu kullan (Daha hızlı)
+        for m in mevcutlar:
+            if "flash" in m.lower():
+                secilen_model_adi = m
+                break
+        # Flash yoksa listedeki herhangi bir Gemini modelini al
+        else:
+            for m in mevcutlar:
+                if "gemini" in m.lower():
+                    secilen_model_adi = m
+                    break
+    except:
+        pass # Listeleme hatası olursa 'gemini-pro' ile devam et
+
+    model = genai.GenerativeModel(secilen_model_adi)
+
+except Exception as e:
+    st.error(f"Bağlantı Hatası: {e}")
+    st.stop()
 
 # --- VERİTABANI ---
 def init_db():
@@ -150,7 +174,7 @@ with c2:
         st.session_state.username = None; st.session_state.messages = []; st.rerun()
 
 # ============================================================
-# 🎛️ YENİ KONTROL PANELİ (YATAY TASARIM)
+# 🎛️ KONTROL PANELİ (SENİN BEĞENDİĞİN YATAY TASARIM)
 # ============================================================
 with st.container():
     st.markdown('<div class="control-panel">', unsafe_allow_html=True)
@@ -171,11 +195,9 @@ with st.container():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # EMOJİLER GERİ GELDİ!
         seviye = st.selectbox("Sınıf Seviyesi", ["🐣 İlkokul", "📘 Ortaokul", "🏫 Lise", "🎓 Üniversite"])
     
     with col2:
-        # EMOJİLER GERİ GELDİ!
         mod = st.selectbox("Çalışma Modu", [
             "❓ Soru Çözümü", 
             "📚 Konu Anlatımı", 
@@ -208,7 +230,7 @@ with st.container():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ============================================================
-# 💬 SOHBET GEÇMİŞİ
+# 💬 SOHBET GEÇMİŞİ VE KUTUSU
 # ============================================================
 uploaded_text, uploaded_image = "", None
 if "Dosya" in mod and is_premium and uploaded_file:
@@ -221,7 +243,6 @@ if "Dosya" in mod and is_premium and uploaded_file:
 for r, c in history:
     with st.chat_message(r): st.markdown(c)
 
-# SOHBET KUTUSU
 if prompt := st.chat_input("Buraya yaz..."):
     if kredi <= 0 and not is_premium: st.error("Günlük hakkın bitti.")
     else:
