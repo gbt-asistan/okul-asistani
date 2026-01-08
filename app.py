@@ -224,12 +224,12 @@ with header_container:
     if is_premium and "Dosya" in mod:
         st.file_uploader("Dosya", type=['pdf','docx','png'], label_visibility="collapsed")
     
-    # Premium Satın Alma ve Kod Girme (Yan Yana Butonlar)
+    # Premium Satın Alma ve Kod Girme
     if not is_premium:
         with st.expander("💎 Premium Kod Gir"):
             kod = st.text_input("Kod:", placeholder="SOA-XXXX", label_visibility="collapsed")
             
-            # BURADA EKRANI İKİYE BÖLÜYORUZ: AKTİFLEŞTİR VE SATIN AL
+            # BURASI DEĞİŞTİ: Butonlar yan yana
             col_act, col_buy = st.columns([1, 1.5])
             
             with col_act:
@@ -239,9 +239,9 @@ with header_container:
                     else: st.error(msg)
             
             with col_buy:
-                # Buraya kendi Shopier veya ödeme linkini yapıştırabilirsin
+                # SADECE YAZI DEĞİŞTİ, TASARIM AYNI
                 link = "https://www.shopier.com/" 
-                st.markdown(f'<a href="{link}" target="_blank" class="buy-btn">💳 3 Üyelik 49 TL - AL</a>', unsafe_allow_html=True)
+                st.markdown(f'<a href="{link}" target="_blank" class="buy-btn">🚀 3 Ay Sadece 49 TL</a>', unsafe_allow_html=True)
     
     st.write("") 
 
