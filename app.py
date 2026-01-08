@@ -24,7 +24,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 🛠️ GÖRÜNÜM DÜZELTME (SOHBET KUTUSU TAMİRİ)
+# 🛠️ GÖRÜNÜM DÜZELTME (SOHBET KUTUSU SOL HİZALAMA TAMİRİ)
 # ============================================================
 st.markdown("""
 <style>
@@ -34,36 +34,36 @@ st.markdown("""
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
     [data-testid="stSidebar"] {display: none !important;}
+    footer {visibility: hidden !important; height: 0px !important;}
 
-    /* 2. FOOTER AYARI (Çok Önemli - Kutunun kaybolmaması için) */
-    /* Display none yaparsak kutu aşağı düşer. Visibility hidden ile yerini koruyoruz ama göstermiyoruz */
-    footer {
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-
-    /* 3. SAYFA DÜZENİ (Sohbet kutusuna yer aç) */
+    /* 2. SAYFA DÜZENİ */
     .block-container {
         padding-top: 1rem !important;
-        padding-bottom: 150px !important; /* Alt kısımda geniş boşluk bırak */
+        padding-bottom: 150px !important;
+        max-width: 1000px !important; /* İçeriği ortala ve sınırla */
     }
 
-    /* 4. SOHBET KUTUSU TASARIMI (YUKARI KALDIRMA) */
+    /* 3. SOHBET KUTUSU TAMİRİ (SOL TARAFI DÜZELTME) */
     [data-testid="stChatInput"] {
-        bottom: 30px !important; /* Ekranın dibinden 30px yukarı kaldır */
-        padding-bottom: 0px !important;
+        bottom: 30px !important;
+        left: 50% !important; /* Ekranın ortasına it */
+        transform: translateX(-50%) !important; /* Tam merkeze oturt */
+        width: 90% !important; /* Mobilde kenarlardan boşluk bırak */
+        max-width: 1000px !important; /* PC'de sonsuza kadar uzamasın */
+        padding-inline: 0px !important; /* İç boşlukları sıfırla */
     }
 
     /* Yazı yazılan alanın tasarımı */
     .stChatInput textarea {
-        background-color: #334155 !important; /* Koyu gri arka plan */
+        background-color: #334155 !important;
         color: white !important;
         border: 1px solid #475569 !important;
-        min-height: 60px !important; /* Yükseklik */
+        min-height: 60px !important;
         border-radius: 12px !important;
+        padding: 15px !important; /* Yazı içerde ferah dursun */
     }
 
-    /* 5. KONTROL PANELİ TASARIMI */
+    /* 4. KONTROL PANELİ TASARIMI */
     .control-panel {
         background-color: #1e293b;
         border: 1px solid #334155;
@@ -99,7 +99,6 @@ try:
     genai.configure(api_key=API_KEY)
     secilen_model = "gemini-1.5-flash"
     try:
-        # Hata almamak için güvenli model seçimi
         modeller = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         if any('flash' in m for m in modeller): secilen_model = next(m for m in modeller if 'flash' in m)
         elif any('pro' in m for m in modeller): secilen_model = next(m for m in modeller if 'pro' in m)
